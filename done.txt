@@ -1,0 +1,2 @@
+completed entity movement (for prototype)
+
