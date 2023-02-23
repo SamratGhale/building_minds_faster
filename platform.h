@@ -79,8 +79,6 @@ struct PlatformState{
 
   void* permanent_storage;
   void* temporary_storage;
-
-  F32 meters_to_pixels;
 };
 
 struct ReadFileResult{

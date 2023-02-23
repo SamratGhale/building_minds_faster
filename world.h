@@ -1,5 +1,4 @@
 #ifndef WORLD
-
 #define TILE_CHUNK_UNINITILIZED INT32_MAX
 
 struct WorldPosition{
@@ -23,16 +22,10 @@ struct WorldChunk{
 };
 
 struct World{
-  F32 tile_size_in_meters;
-  U32 tile_size_in_pixels;
+  U32 chunk_size_in_pixels;
   F32 chunk_size_in_meters;
   WorldChunk chunk_hash[128];
-  //tiles
-  U32 tiles_per_width; // 17
-  U32 tiles_per_height; // 9
-
   F32 meters_to_pixels;
-
 };
 
 #define WORLD

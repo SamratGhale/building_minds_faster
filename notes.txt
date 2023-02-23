@@ -1,12 +1,9 @@
-Why not implement chunks with just x and not x,y
 Chunk/Level Border
 Current level on game_state
 
 Architectural game:
 
 NOTE: Entity storage and simulation
-
-Each entity has world_position and sim_positoin
 
 one chunk/level has no collision and interaction with another chunk/level 
 algorithm for simulation
@@ -17,8 +14,6 @@ TODO:
 - png rendering
 - Prototype layer
 - entity storage (code already exists)(only for single level)
-- player movement
-- bitmap rendering
 - world building
 - level design
 - sound?
@@ -27,14 +22,5 @@ TODO:
 	- opengl integration
 	- animation
 
-for now camera position is 0,0 on chunk 0,0. Consider the coordinate system to be aligned center
-
-the two types of positon:
-	world_positin - it's a general position containing which tile it belongs to and it's position relative to the CENTER OF THE CHUNK/LEVEL
-	V2 - it's relative to the camera
-
-	this need not exist if the camera is descrete
-	For now let's not make camera position continious
-
--png rendering
-	watch and read handmade hero code to write code to DISPLAY png on the screen
+-simulation
+	debugging left
