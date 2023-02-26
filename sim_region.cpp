@@ -1,10 +1,6 @@
-
 function SimEntity* add_entity(GameState* game_state, SimRegion* region, U32 low_index,LowEntity* low_entity, V2* entity_rel_pos){
-
   assert(low_index);
-
   SimEntity* entity = 0;
-
   if(region->entity_count < region->max_count){
     entity = region->entities + region->entity_count++;
 
@@ -57,9 +53,7 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
 
   for(S32 y = min_chunk.chunk_y; y <= max_chunk.chunk_y; y++){
     for(S32 x = min_chunk.chunk_x; x <= max_chunk.chunk_x; x++){
-
       WorldChunk*chunk = get_world_chunk(world, x, y);
-
       if(!chunk){
 	assert(0);
       }
@@ -70,13 +64,10 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
 	while(node && node->entity_index){
 	  //Go thru all the elements in the chunk
 	  LowEntity* entity = game_state->low_entities + node->entity_index;
-
 	  V2 entity_sim_space = subtract(sim_region->world, &entity->pos, &sim_region->center);
-
 	  if(is_in_rectangle(sim_region->bounds, entity_sim_space)){
 	    add_entity(game_state, sim_region, node->entity_index, entity, &entity_sim_space);
 	  }
-
 	  node = node->next; 
 	}
 	chunk = chunk->next;
@@ -89,15 +80,15 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
 function void end_sim(SimRegion* region, GameState* game_state){
     SimEntity* entity = region->entities;
     for (U32 i = 0; i <region->entity_count; i += 1, ++entity){
-
-      //take the entity
       LowEntity* stored = game_state->low_entities + entity->storage_index;
       stored->sim = *entity;
 
       WorldPosition new_world_p = map_into_world_position(region->world, &region->center, entity->pos);
+      if((entity->type == entity_type_player) && ((stored->pos.chunk_x != new_world_p.chunk_x) || (stored->pos.chunk_y != new_world_p.chunk_y))){
+	int a = 10;
+      }
 
       change_entity_location(&game_state->world_arena, region->world, entity->storage_index, stored, new_world_p);
-
-      //The camera position changing code will be here
+      int b = 300;
     }
 }

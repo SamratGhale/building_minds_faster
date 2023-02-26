@@ -127,7 +127,7 @@ inline WorldPosition map_into_chunk_space(World* world, WorldPosition base_pos, 
 inline void adjust_world_positon(World* world, S32* chunk, F32 * offset){
   S32 extra_offset = (S32)roundf(*offset / world->chunk_size_in_meters);
   *chunk += extra_offset;
-  *offset -= *offset * world->chunk_size_in_meters;
+  *offset -= extra_offset * world->chunk_size_in_meters;
 
   //TODO: check if the new values are valid
 }
@@ -136,8 +136,8 @@ inline WorldPosition map_into_world_position(World* world, WorldPosition* origin
   WorldPosition result = *origin; 
   result.offset += offset;
 
-  adjust_world_positon(world, &result.chunk_y, &offset.y);
-  adjust_world_positon(world, &result.chunk_x, &offset.x);
+  adjust_world_positon(world, &result.chunk_y, &result.offset.y);
+  adjust_world_positon(world, &result.chunk_x, &result.offset.x);
   return result;
 }
 

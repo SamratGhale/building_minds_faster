@@ -131,7 +131,7 @@ inline Rec2 rect_center_full_dim(V2 center, V2 full_dim){
   return rect_center_half_dim(center, full_dim * 0.5f);
 }
 
-//Check if the V2 test is inside the Rec2 rect
+//test is relative to a WorldPosition
 inline B32 is_in_rectangle(Rec2 rect, V2 test){
   B32 result = ((test.x <  rect.max.x && test.y < rect.max.y)
 	    && ( test.x >= rect.min.x && test.y >= rect.min.y));

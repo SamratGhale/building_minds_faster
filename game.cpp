@@ -256,8 +256,55 @@ function AddLowEntityResult add_wall(GameState* game_state, S32 chunk_x, S32 chu
   return entity;
 }
 
+function void render_entities2(Rec2* cam_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, GameState* game_state){
 
-function void render_entities(WorldPosition* camera_pos, OffscreenBuffer* buffer, SimRegion *sim_region) {
+  //First find out the min and max corner so that we can know which chunks are required
+  World* world = game_state->world;
+
+  WorldPosition min_chunk = map_into_world_position(game_state->world, camera_pos, get_min_corner(*cam_bounds));
+  WorldPosition max_chunk = map_into_world_position(game_state->world, camera_pos, get_max_corner(*cam_bounds));
+
+  for(S32 y = min_chunk.chunk_y; y <= max_chunk.chunk_y; y++){
+    for(S32 x = min_chunk.chunk_x; x <= max_chunk.chunk_x; x++){
+      WorldChunk* chunk = get_world_chunk(world, x, y);
+      while(chunk){
+	EntityNode* node = chunk->node;
+	while(node){
+	  LowEntity* low_entity = game_state->low_entities + node->entity_index;
+	  V2 entity_cam_space = subtract(game_state->world, &low_entity->pos, camera_pos);
+	  if(is_in_rectangle(*cam_bounds, entity_cam_space)){
+	    SimEntity *entity = &low_entity->sim;
+	    switch (entity->type) {
+	    case entity_type_player:
+	    case entity_type_wall: {
+
+	      F32 mps = world->meters_to_pixels;
+	      S32 center_x = (camera_pos->offset.x*mps + (world->chunk_size_in_pixels*0.5f)) + (entity->pos.x * mps);
+	      S32 center_y = (camera_pos->offset.y*mps + (world->chunk_size_in_pixels*0.5f)) - (entity->pos.y * mps);
+
+	      S32 min_x = center_x - (entity->width  *  world->meters_to_pixels) / 2;
+	      S32 min_y = center_y - (entity->height *  world->meters_to_pixels) / 2;
+	      S32 max_x = center_x + (entity->width  *  world->meters_to_pixels) / 2;
+	      S32 max_y = center_y + (entity->height *  world->meters_to_pixels) / 2;
+	      draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
+	    }break;
+	    case entity_type_npc: {
+	    }break;
+	    case entity_type_null: {
+	      //Do nothing
+	    }break;
+	    }
+	  }
+	  node = node->next;
+	}
+	chunk = chunk->next;
+      }
+    }
+  }
+
+}
+
+function void render_entities(Rec2 * camera_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, SimRegion *sim_region) {
 
   SimEntity * entity = sim_region->entities;
   World* world = sim_region->world;
@@ -304,6 +351,13 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     add_low_entity(game_state, entity_type_null, {}, 0);
     add_wall(game_state, 0, 0, V2{ 0.0f, -15.0f }, 90.0f, 3.0f);
     background_png = parse_png("../data/background_smool.png");
+
+    //It is all about how big it is
+    V2 dim_in_meters  = {};
+    dim_in_meters.x = (F32)buffer->width*(1.0f/(F32)world->meters_to_pixels);
+    dim_in_meters.y = (F32)buffer->height*(1.0f/(F32)world->meters_to_pixels);
+
+    game_state->camera_bounds = rect_center_half_dim(V2{0,0}, dim_in_meters);
     game_state->is_initilized = true;
   }
 
@@ -372,14 +426,13 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     }
   }
 
-  Rec2 camera_bounds = rect_center_full_dim(V2{ 0,0 }, game_state->world->chunk_size_in_meters * V2{ 2,2 });
 
   //render_entities(buffer, game_state);
   MemoryArena sim_arena;
   initilize_arena(&sim_arena, platform_state->temporary_storage_size, platform_state->temporary_storage);
 
 
-  SimRegion* sim_region = begin_sim(&sim_arena, game_state, game_state->world, game_state->camera_p, camera_bounds);
+  SimRegion* sim_region = begin_sim(&sim_arena, game_state, game_state->world, game_state->camera_p, game_state->camera_bounds);
 
   //Update entities
   SimEntity* entity = sim_region->entities;
@@ -397,8 +450,8 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     }
     }
   }
-  render_entities(&game_state->camera_p, buffer, sim_region);
   end_sim(sim_region, game_state);
+  render_entities2(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
 }
 
 

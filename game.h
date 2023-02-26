@@ -36,6 +36,7 @@ struct GameState{
   MemoryArena world_arena;
   World* world;
   WorldPosition camera_p;
+  Rec2 camera_bounds;
   U32 low_entity_count;
   LowEntity low_entities[1000];
   B32 is_initilized;

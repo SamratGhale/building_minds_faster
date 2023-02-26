@@ -1,2 +1,3 @@
 TODO:
-chunk size should be rectangle not a square
+
+Needs optimization on rendering and moving entities
