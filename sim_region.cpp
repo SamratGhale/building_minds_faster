@@ -2,23 +2,26 @@
 function SimEntity* add_entity(GameState* game_state, SimRegion* region, U32 low_index,LowEntity* low_entity, V2* entity_rel_pos){
 
   assert(low_index);
+
   SimEntity* entity = 0;
 
-  if(low_entity){
-    *entity = low_entity->sim;
-    add_flag(&low_entity->sim, entity_flag_simming);
-  }
+  if(region->entity_count < region->max_count){
+    entity = region->entities + region->entity_count++;
 
+    if(low_entity){
+      *entity = low_entity->sim;
+      add_flag(&low_entity->sim, entity_flag_simming);
+    }
 
-  if(entity){
-    entity->storage_index = low_index;
-    if(entity_rel_pos){
-      entity->pos = *entity_rel_pos;
-    } else{
+    if(entity){
+      entity->storage_index = low_index;
+      if(entity_rel_pos){
+	entity->pos = *entity_rel_pos;
+      } else{
 	entity->pos = subtract(region->world, &low_entity->pos, &region->center);
+      }
     }
   }
-
   return entity;
 }
 
@@ -42,7 +45,7 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
   //TODO: take the world_position and get the camera_relative positon of
   //Min corner and max corner
 
-  WorldPosition min_chunk = map_into_world_position(world, &sim_region->center, get_max_corner(sim_region->bounds));
+  WorldPosition min_chunk = map_into_world_position(world, &sim_region->center, get_min_corner(sim_region->bounds));
   WorldPosition max_chunk = map_into_world_position(world, &sim_region->center, get_max_corner(sim_region->bounds));
 
   //NOTE: alogrithm
@@ -64,7 +67,7 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
       while(chunk){
 
 	EntityNode* node = chunk->node;
-	while(node){
+	while(node && node->entity_index){
 	  //Go thru all the elements in the chunk
 	  LowEntity* entity = game_state->low_entities + node->entity_index;
 
@@ -85,7 +88,6 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
 
 function void end_sim(SimRegion* region, GameState* game_state){
     SimEntity* entity = region->entities;
-
     for (U32 i = 0; i <region->entity_count; i += 1, ++entity){
 
       //take the entity
@@ -94,7 +96,7 @@ function void end_sim(SimRegion* region, GameState* game_state){
 
       WorldPosition new_world_p = map_into_world_position(region->world, &region->center, entity->pos);
 
-      change_entity_location(region->sim_arena, region->world, entity->storage_index, stored, new_world_p);
+      change_entity_location(&game_state->world_arena, region->world, entity->storage_index, stored, new_world_p);
 
       //The camera position changing code will be here
     }

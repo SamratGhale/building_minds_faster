@@ -40,6 +40,7 @@ struct GameState{
   LowEntity low_entities[1000];
   B32 is_initilized;
   S32 controlled_entity_index[5];
+  S32 player_index;
 };
 
 #define GAME_H

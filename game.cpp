@@ -11,13 +11,13 @@ function U32 denormalize_color(F32 R, F32 G, F32 B) {
 //TODO: associate PNG(pixel) data to entities, every data should be connected to a entity
 global_variable ImageU32 background_png;
 
-struct MoveSpec{
+struct MoveSpec {
   B32 unit_max_accel_vector;
   F32 speed;
   F32 drag;
 };
 
-inline MoveSpec default_move_spec(){
+inline MoveSpec default_move_spec() {
   MoveSpec result;
   result.unit_max_accel_vector = 0;
   result.speed = 1.0f;
@@ -33,37 +33,37 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
 
   S32 SourceOffsetX = 0;
 
-  if(MinX < 0) {
+  if (MinX < 0) {
     SourceOffsetX = -MinX;
     MinX = 0;
   }
 
   S32 SourceOffsetY = 0;
-  if(MinY < 0) {
+  if (MinY < 0) {
     SourceOffsetY = -MinY;
     MinY = 0;
   }
 
-  if(MaxX > buffer->width) {
+  if (MaxX > buffer->width) {
     MaxX = buffer->width;
   }
 
-  if(MaxY > buffer->height) {
+  if (MaxY > buffer->height) {
     MaxY = buffer->height;
   }
 
   // TODO(casey): SourceRow needs to be changed based on clipping.
   U32 *SourceRow = bitmap->pixels + bitmap->width*(bitmap->height - 1);
-  SourceRow += -SourceOffsetY*bitmap->width + SourceOffsetX;
+  SourceRow += -SourceOffsetY * bitmap->width + SourceOffsetX;
 
-  U8 *DestRow = ((U8*)buffer->memory + MinX*buffer->bytes_per_pixel+ MinY*buffer->pitch);
+  U8 *DestRow = ((U8*)buffer->memory + MinX * buffer->bytes_per_pixel + MinY * buffer->pitch);
 
-  for(int Y = MinY; Y < MaxY; ++Y) {
+  for (int Y = MinY; Y < MaxY; ++Y) {
 
     U32 *Dest = (U32 *)DestRow;
     U32 *Source = SourceRow;
 
-    for(int X = MinX; X < MaxX; ++X) {
+    for (int X = MinX; X < MaxX; ++X) {
       F32 A = (F32)((*Source >> 24) & 0xFF) / 255.0f;
       A *= CAlpha;
       F32 SR = (F32)((*Source >> 16) & 0xFF);
@@ -75,9 +75,9 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
 
       // TODO(casey): Someday, we need to talk about premultiplied alpha!
       // (this is not premultiplied alpha)
-      F32 R = (1.0f-A)*DR + A*SR;
-      F32 G = (1.0f-A)*DG + A*SG;
-      F32 B = (1.0f-A)*DB + A*SB;
+      F32 R = (1.0f - A)*DR + A * SR;
+      F32 G = (1.0f - A)*DG + A * SG;
+      F32 B = (1.0f - A)*DB + A * SB;
 
       *Dest = (((U32)(R + 0.5f) << 16) | ((U32)(G + 0.5f) << 8) | ((U32)(B + 0.5f) << 0));
       ++Dest;
@@ -91,15 +91,14 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
 
 
 #define MAX(a,b)((a>b)?(a):(b))
-function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x, F32 p_delta_y, F32 *t_min, F32 min_y, F32 max_y){
+function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x, F32 p_delta_y, F32 *t_min, F32 min_y, F32 max_y) {
   B32 hit = false;
-
   F32 t_epsilon = 0.001f;
-  if(p_delta_x != 0.0f){
-    F32 t_result = (wall_x - rel_x) /p_delta_x;
+  if (p_delta_x != 0.0f) {
+    F32 t_result = (wall_x - rel_x) / p_delta_x;
     F32 y = rel_y + t_result * p_delta_y;
-    if((t_result >= 0.0f) && (*t_min > t_result)){
-      if((y >= min_y) && (y <= max_y)){
+    if ((t_result >= 0.0f) && (*t_min > t_result)) {
+      if ((y >= min_y) && (y <= max_y)) {
 	*t_min = MAX(0.0f, t_result - t_epsilon);
 	hit = true;
       }
@@ -108,74 +107,70 @@ function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x, F32 p_de
   return hit;
 }
 
-/**
-   Problem: the position and dp is on pixels  but speed is on meters
-   Soultion: convert meters to pixles
-**/
-
-function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, MoveSpec* move_spec, V2 ddP){
+function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, MoveSpec* move_spec, V2 ddP) {
   World* world = sim_region->world;
 
-  if(move_spec->unit_max_accel_vector){
-    F32 ddP_len= length_sq(ddP);
-    if(ddP_len > 1.0f){
-      ddP = ddP *  (1.0f / sq_root(ddP_len));
+  if (move_spec->unit_max_accel_vector) {
+    F32 ddP_len = length_sq(ddP);
+    if (ddP_len > 1.0f) {
+      ddP = ddP * (1.0f / sq_root(ddP_len));
     }
   }
+
   ddP *= move_spec->speed;
   ddP -= move_spec->drag*entity->dP;
 
   V2 delta = (0.5f* ddP * square(dt) + entity->dP* dt);
   entity->dP = ddP * dt + entity->dP;
 
-  for (S32 j = 0; j <4 ; j += 1){
+  for (S32 j = 0; j < 4; j += 1) {
     F32 t_min = 1.0f;
     V2 wall_normal = {};
     U32 hit_entity_index = 0;
     V2 desired_pos = entity->pos + delta;
 
-    for (S32 i = 1; i < sim_region->entity_count; i += 1){
-      if(i != entity->storage_index){
+    for (S32 i = 0; i < sim_region->entity_count; i += 1) {
+      if (i != entity->storage_index) {
 	SimEntity * test_entity = sim_region->entities + i;
 	F32 diameter_w = test_entity->width + entity->width;
 	F32 diameter_h = test_entity->height + entity->height;
-	V2 min_corner = -0.5f*V2{diameter_w, diameter_h};
-	V2 max_corner = 0.5f*V2{diameter_w, diameter_h};
+	V2 min_corner = -0.5f*V2{ diameter_w, diameter_h };
+	V2 max_corner = 0.5f*V2{ diameter_w, diameter_h };
 
 	V2 rel = entity->pos - test_entity->pos;
 
-	if(test_wall(min_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)){
-	  wall_normal = V2{-1, 0};
+	if (test_wall(min_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
+	  wall_normal = V2{ -1, 0 };
 	  hit_entity_index = i;
 	}
-	if(test_wall(max_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)){
-	  wall_normal = V2{1, 0};
+	if (test_wall(max_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
+	  wall_normal = V2{ 1, 0 };
 	  hit_entity_index = i;
 	}
-	if(test_wall(max_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)){
-	  wall_normal = V2{0, 1};
+	if (test_wall(max_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
+	  wall_normal = V2{ 0, 1 };
 	  hit_entity_index = i;
 	  clear_flag(entity, entity_flag_falling);
 	}
-	if(test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)){
-	  wall_normal = V2{0, -1};
+	if (test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
+	  wall_normal = V2{ 0, -1 };
+	  hit_entity_index = i;
 	  add_flag(entity, entity_on_ground);
 	  clear_flag(entity, entity_flag_falling);
-	  hit_entity_index = i;
 	}
       }
     }
-    entity->pos += t_min* delta;
-    if(hit_entity_index){
-      entity->dP = entity->dP - 1*inner(entity->dP, wall_normal)* wall_normal;
+    entity->pos += t_min * delta;
+    if (hit_entity_index) {
+      entity->dP = entity->dP - 1 * inner(entity->dP, wall_normal)* wall_normal;
       delta = desired_pos - entity->pos;
-      delta = delta -1*inner(delta, wall_normal)* wall_normal;
+      delta = delta - 1 * inner(delta, wall_normal)* wall_normal;
     }else{
       if(is_flag_set(entity, entity_on_ground)){
 	clear_flag(entity, entity_on_ground);
       }else{
 	if(!is_flag_set(entity, entity_flag_jumping)){
-	  add_flag(entity, entity_flag_falling);
+	    add_flag(entity, entity_flag_falling);
 	}
       }
     }
@@ -183,14 +178,14 @@ function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, Mov
 }
 
 function void draw_rectangle(OffscreenBuffer* buffer, S32 min_x, S32 min_y, S32 max_x, S32 max_y, U32 color) {
-  if(min_x < 0) min_x = 0;
-  if(min_y < 0) min_y = 0;
-  if(max_x < 0) max_x = 0;
-  if(max_y < 0) max_y = 0;
-  if(max_x > buffer->width)  max_x = buffer->width;
-  if(max_y > buffer->height) max_y = buffer->height;
-  if(min_x > buffer->width)  min_x = buffer->width;
-  if(min_y > buffer->height) min_y = buffer->height;
+  if (min_x < 0) min_x = 0;
+  if (min_y < 0) min_y = 0;
+  if (max_x < 0) max_x = 0;
+  if (max_y < 0) max_y = 0;
+  if (max_x > buffer->width)  max_x = buffer->width;
+  if (max_y > buffer->height) max_y = buffer->height;
+  if (min_x > buffer->width)  min_x = buffer->width;
+  if (min_y > buffer->height) min_y = buffer->height;
 
   //pitch has bytePerPixel
   U8* row = (U8*)buffer->memory + min_y * buffer->pitch + min_x * buffer->bytes_per_pixel;
@@ -213,17 +208,25 @@ function void paint_buffer(OffscreenBuffer* buffer, F32 r, F32 g, F32 b) {
   }
 }
 
-struct AddLowEntityResult{
+struct AddLowEntityResult {
   LowEntity* low;
   U32 index;
 };
 
+inline WorldPosition null_pos() {
+  WorldPosition result = {};
+  result.chunk_x = TILE_CHUNK_UNINITILIZED;
+  return result;
+}
 
-function AddLowEntityResult add_low_entity(GameState* game_state, EntityType type, WorldPosition p, U32 color){
+
+function AddLowEntityResult add_low_entity(GameState* game_state, EntityType type, WorldPosition p, U32 color) {
   U32 entity_index = game_state->low_entity_count++;
-  LowEntity* low_entity= game_state->low_entities + entity_index;
+  LowEntity* low_entity = game_state->low_entities + entity_index;
   *low_entity = {};
-  low_entity->pos = p;
+  low_entity->pos = null_pos();
+  change_entity_location(&game_state->world_arena, game_state->world, entity_index, low_entity, p);
+  //low_entity->pos = p;
   low_entity->sim.color = color;
   low_entity->sim.storage_index = entity_index;
   low_entity->sim.type = type;
@@ -233,15 +236,15 @@ function AddLowEntityResult add_low_entity(GameState* game_state, EntityType typ
   return result;
 }
 
-function AddLowEntityResult add_player(GameState* game_state, WorldPosition pos){
+function AddLowEntityResult add_player(GameState* game_state, WorldPosition pos) {
   U32 color = denormalize_color(0.4f, 0.2f, 0.2f);
   AddLowEntityResult entity = add_low_entity(game_state, entity_type_player, pos, color);
-  entity.low->sim.height = 0.9f;
-  entity.low->sim.width  = 0.7f;
+  entity.low->sim.height = 3.0f;
+  entity.low->sim.width = 3.0f;
   return entity;
 }
 
-function AddLowEntityResult add_wall(GameState* game_state,S32 chunk_x, S32 chunk_y, V2 pos, F32 width, F32 height){
+function AddLowEntityResult add_wall(GameState* game_state, S32 chunk_x, S32 chunk_y, V2 pos, F32 width, F32 height) {
   WorldPosition wall_pos = {};
   wall_pos.chunk_y = chunk_y;
   wall_pos.chunk_x = chunk_x;
@@ -249,32 +252,34 @@ function AddLowEntityResult add_wall(GameState* game_state,S32 chunk_x, S32 chun
   U32 color = denormalize_color(0.0f, 0.4f, 0.3f);
   AddLowEntityResult entity = add_low_entity(game_state, entity_type_wall, wall_pos, color);
   entity.low->sim.height = height;
-  entity.low->sim.width  = width;
+  entity.low->sim.width = width;
   return entity;
 }
 
 
-function void render_entities(OffscreenBuffer* buffer, SimRegion *sim_region){
+function void render_entities(WorldPosition* camera_pos, OffscreenBuffer* buffer, SimRegion *sim_region) {
 
   SimEntity * entity = sim_region->entities;
   World* world = sim_region->world;
 
-  for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++){
-    switch(entity->type){
+  for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
+    switch (entity->type) {
     case entity_type_player:
-    case entity_type_wall:{
-      //Entity ko center
-      S32 center_x = entity->pos.x * world->meters_to_pixels;
-      S32 center_y = entity->pos.y * world->meters_to_pixels;
-      S32 min_x = center_x - (entity->width *  world->meters_to_pixels)/2;
-      S32 min_y = center_y - (entity->height * world->meters_to_pixels)/2;
-      S32 max_x = center_x + (entity->width *  world->meters_to_pixels)/2;
-      S32 max_y = center_y + (entity->height * world->meters_to_pixels)/2;
+    case entity_type_wall: {
+
+      F32 mps = world->meters_to_pixels;
+      S32 center_x = (camera_pos->offset.x*mps + (world->chunk_size_in_pixels*0.5f)) + (entity->pos.x * mps);
+      S32 center_y = (camera_pos->offset.y*mps + (world->chunk_size_in_pixels*0.5f)) - (entity->pos.y * mps);
+
+      S32 min_x = center_x - (entity->width  *  world->meters_to_pixels) / 2;
+      S32 min_y = center_y - (entity->height *  world->meters_to_pixels) / 2;
+      S32 max_x = center_x + (entity->width  *  world->meters_to_pixels) / 2;
+      S32 max_y = center_y + (entity->height *  world->meters_to_pixels) / 2;
       draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
     }break;
-    case entity_type_npc:{
+    case entity_type_npc: {
     }break;
-    case entity_type_null:{
+    case entity_type_null: {
       //Do nothing
     }break;
     }
@@ -286,87 +291,68 @@ function void render_entities(OffscreenBuffer* buffer, SimRegion *sim_region){
 #define was_down(b, C)((!C->b.ended_down && C->b.half_transition_count)?1:0)
 
 function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state, GameInput* input) {
-  //NOTE(casery): I like to reserve the entity slot 0 for the null entity cause i'm a genius programmer
+
   GameState* game_state = (GameState*)platform_state->permanent_storage;
-
   if (!game_state->is_initilized) {
-
-     
     initilize_arena(&game_state->world_arena, platform_state->permanent_storage_size, (U8*)platform_state->permanent_storage + sizeof(GameState));
     game_state->world = push_struct(&game_state->world_arena, World);
-    initilize_world(game_state->world, buffer->height, 10.0f); //this might cause null error?
+    initilize_world(game_state->world, buffer->height, 40.0f); //this might cause null error?
     World *world = game_state->world;
-    S32 tile_size_pixels = 60;
-    //game_state->camera_position = chunkp_from_tilep(world, camera_tile_x, camera_tile_y);
 
-    add_low_entity(game_state, entity_type_null,  {}, 0);
-    add_wall(game_state,0,0, V2{-1.0f, 6.0f}, 25.0f, 0.2f);
-    add_wall(game_state,0,0, V2{-1.0f, -6.0f}, 25.0f, 0.2f);
-    add_wall(game_state,0,0, V2{-1.0f, -3.0f}, 10.0f, 0.2f);
-    add_wall(game_state,0,0, V2{-11.3f, 0.0f}, 0.2f, 13.0f);
-    add_wall(game_state,0,0, V2{10.0f, 0.0f}, 0.2f, 13.0f);
+    game_state->camera_p = create_world_pos(0, 0, 0, 0);
 
-    //Get the decompressed pixels and it's attributes
-    //Render it to the buffer
-
+    add_low_entity(game_state, entity_type_null, {}, 0);
+    add_wall(game_state, 0, 0, V2{ 0.0f, -15.0f }, 90.0f, 3.0f);
     background_png = parse_png("../data/background_smool.png");
     game_state->is_initilized = true;
   }
 
   //Background color
   paint_buffer(buffer, 0.4f, 0.9f, 0.3f);
-  draw_bitmap(buffer, &background_png,0, 0);
+  //draw_bitmap(buffer, &background_png, 0, 0);
   World* world = game_state->world;
 
-  Rec2 camera_bounds = rect_center_full_dim(V2{0,0}, game_state->world->chunk_size_in_meters * V2{2,2});
-
-  //render_entities(buffer, game_state);
-  MemoryArena sim_arena;
-  initilize_arena(&sim_arena, platform_state->temporary_storage_size, platform_state->temporary_storage);
-
-  SimRegion* sim_region = begin_sim(&sim_arena, game_state, game_state->world, game_state->camera_p, camera_bounds);
-
-  //Player movement
-  for (S32 i = 0; i < array_count(input->controllers) ; i += 1){
-    S32 entity_index = game_state->controlled_entity_index[i];
+  V2 player_ddp = {}; //acceleration
+  for (S32 i = 0; i < array_count(input->controllers); i += 1) {
+    S32 controlled_entity_index = game_state->controlled_entity_index[i];
     ControllerInput* controller = input->controllers + i;
 
-    if(entity_index ==  0){
-      if(controller->start.ended_down){
-	WorldPosition new_player_pos = sim_region->center;
-	new_player_pos.offset = V2{1.0f, -5.0f};
+    if (controlled_entity_index == 0) {
+      if (controller->start.ended_down) {
+	WorldPosition new_player_pos = {};
+	new_player_pos.offset  = V2{ 0.0f, 0.0f };
 	AddLowEntityResult res = add_player(game_state, new_player_pos);
 	game_state->controlled_entity_index[i] = res.index;
+	game_state->player_index = res.index;
       }
-    }else{
-      V2 ddP = {}; //acceleration
-      LowEntity* low_entity = game_state->low_entities + entity_index;
-      SimEntity* entity     = &low_entity->sim;
+    }
+    else {
+      LowEntity* low_entity = game_state->low_entities + controlled_entity_index;
+      SimEntity* entity = &low_entity->sim;
+      if (controller->is_analog) {
+	player_ddp = V2{controller->stick_x, controller->stick_y};
+      } else {
+	//TODO:if the entity is in a ladder then move_up should be activated
+	if(entity->type == entity_type_player){
+	  //if(ended_down(move_up,    controller))  player_ddp.y =  1.0f;
+	  //if(ended_down(move_down,  controller))  player_ddp.y = -1.0f;
+	  if(ended_down(move_right, controller))  player_ddp.x =  1.0f;
+	  if(ended_down(move_left,  controller))  player_ddp.x = -1.0f;
+	}
 
-      if(controller->is_analog){
-	//ddP = V2{controller->stick_x, controller->stick_y};
-      } else{
-	//if(ended_down(move_up, controller))     ddP.y =  1.0f;
-	//if(ended_down(move_down, controller))   ddP.y = -1.0f;
-	if(ended_down(move_right, controller))  ddP.x =  1.0f;
-	if(ended_down(move_left, controller))  ddP.x =  -1.0f;
-
-	//First step
-	if(ended_down(start,controller)){
-	  //If we reached jump time then stop jumping and stop falling
+	if(ended_down(start, controller)){
 	  if(entity->jump_time >= 1.0f){
 	    add_flag(entity, entity_flag_falling);
 	    clear_flag(entity, entity_flag_jumping);
 	    entity->jump_time = 0;
 	  }else{
 	    entity->jump_time += input->dtForFrame;
-	    ddP.y = 1.0f;
+	    player_ddp.y = 1.0f;
 	    if(!is_flag_set(entity, entity_flag_jumping)){
 	      add_flag(entity, entity_flag_jumping);
 	    }
 	  }
 	}else{
-	  //If the entity was jumping and start isn't pressed then we need to stop jumping and start falling
 	  if(is_flag_set(entity, entity_flag_jumping)){
 	    clear_flag(entity, entity_flag_jumping);
 	    add_flag(entity, entity_flag_falling);
@@ -374,27 +360,44 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 	  }
 	}
 
-	//If entity is falling we need to set the jump_time to 0 and check if it reached ground
 	if(is_flag_set(entity, entity_flag_falling)){
 	  entity->jump_time = 0;
 	  if(!is_flag_set(entity, entity_on_ground)){
-	    ddP.y = -1.0f;
+	    player_ddp.y = -1.0f;
 	  }else{
 	    clear_flag(entity, entity_flag_falling);
 	  }
 	}
-
       }
-      MoveSpec spec = default_move_spec();
-      spec.unit_max_accel_vector = 1;
-      spec.speed = 3.61f;
-      spec.drag = 4.0f;
-      move_entity(sim_region, entity, input->dtForFrame, &spec, ddP);
     }
   }
 
+  Rec2 camera_bounds = rect_center_full_dim(V2{ 0,0 }, game_state->world->chunk_size_in_meters * V2{ 2,2 });
 
-  render_entities(buffer, sim_region);
+  //render_entities(buffer, game_state);
+  MemoryArena sim_arena;
+  initilize_arena(&sim_arena, platform_state->temporary_storage_size, platform_state->temporary_storage);
+
+
+  SimRegion* sim_region = begin_sim(&sim_arena, game_state, game_state->world, game_state->camera_p, camera_bounds);
+
+  //Update entities
+  SimEntity* entity = sim_region->entities;
+  for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
+    switch (entity->type) {
+    case entity_type_player: {
+      if (entity->type == entity_type_player){
+	MoveSpec spec = default_move_spec();
+	spec.unit_max_accel_vector = 1;
+	spec.speed = 10.61f;
+	spec.drag = 4.0f;
+	move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
+
+      }
+    }
+    }
+  }
+  render_entities(&game_state->camera_p, buffer, sim_region);
   end_sim(sim_region, game_state);
 }
 

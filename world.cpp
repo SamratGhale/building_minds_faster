@@ -61,25 +61,30 @@ inline WorldChunk* get_world_chunk(World* world, S32 chunk_x, S32 chunk_y, Memor
   return chunk;
 }
 
+//TODO: make sure the entity was the removed and the new_p was added
 inline void change_entity_location_raw(MemoryArena* arena,World* world,  U32 entity_index, WorldPosition old_p, WorldPosition new_p){
   if(is_valid(old_p)){
     //Old_p is valid now we need to remove the old p from it's previous location in the world
     WorldChunk* chunk = get_world_chunk(world, old_p.chunk_x, old_p.chunk_y, arena);
+
+    assert(chunk);
+    assert(chunk->node); //?
+
     EntityNode* node = chunk->node;
     if(node->entity_index == entity_index){
       chunk->node = node->next;
     }else{
-      while(node){
-	EntityNode* prev = node;
-	node = node->next;
-	if(node->entity_index == entity_index){
-	  //Job done
-	  prev->next = node->next;
-	  break;
+      EntityNode* curr = node;
+      while(curr->next){
+	if(curr->next->entity_index == entity_index){
+	  node = curr->next;
+	  curr->next = curr->next->next;
+	}else{
+	  curr = curr->next;
 	}
-	node = node->next;
       }
     }
+
   }
   //Add this to the world chunk
   WorldChunk* chunk = get_world_chunk(world, new_p.chunk_x, new_p.chunk_y, arena);
@@ -143,5 +148,13 @@ inline V2 subtract(World* world, WorldPosition* a, WorldPosition* b){
   result.x = a->chunk_x - b->chunk_x;
   result   = result * world->chunk_size_in_meters;
   result  += (a->offset - b->offset);
+  return result;
+}
+
+function WorldPosition create_world_pos(S32 chunk_x, S32 chunk_y, F32 off_x, F32 off_y){
+  WorldPosition result = {};
+  result.chunk_x = chunk_x;
+  result.chunk_y = chunk_y;
+  result.offset  = V2{off_x, off_y};
   return result;
 }

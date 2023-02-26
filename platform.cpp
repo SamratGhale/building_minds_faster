@@ -16,7 +16,7 @@ function ReadFileResult read_entire_file(char* file_name){
   ReadFileResult result = {};
   HANDLE file_handle = CreateFileA(file_name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
   if(file_handle != INVALID_HANDLE_VALUE){
-    U32 file_size;
+    U64 file_size;
     if(GetFileSizeEx(file_handle, (PLARGE_INTEGER)&file_size)){
       result.contents = VirtualAlloc(0, file_size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
       if(result.contents){
@@ -209,10 +209,10 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR command_
   window_class.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
   RegisterClass(&window_class);
 
-  HWND window = CreateWindowEx(0,window_class.lpszClassName,"Playing around", WS_OVERLAPPED | WS_VISIBLE , CW_USEDEFAULT, CW_USEDEFAULT, 960 + 16, 540 + 39,  0, 0, instance, 0);
+  HWND window = CreateWindowEx(0,window_class.lpszClassName,"Playing around", WS_OVERLAPPED | WS_VISIBLE , CW_USEDEFAULT, CW_USEDEFAULT, 960, 540,  0, 0, instance, 0);
 
-  SetWindowLong(window, GWL_STYLE,
-               GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZEBOX); 
+  //Remove maximize window
+  SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZEBOX); 
 
   //Window init finish
   RECT rect;

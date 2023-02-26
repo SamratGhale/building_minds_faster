@@ -24,3 +24,26 @@ TODO:
 
 -simulation
 	debugging left
+
+game_constants.txt
+NOTE: this file is a collection of constants that's used in the game
+NOTE: would be a good idea to read from this file instead of putting it directly in the game and read it at the start of the game
+NOTE: that wat we wouldn't need to recompile everytime, helps in debugging
+
+
+Jumping code documentation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

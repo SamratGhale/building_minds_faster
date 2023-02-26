@@ -9,10 +9,10 @@ enum EntityType{
 
 enum EntityFlags{
   //This are all used for the player only
-  entity_flag_jumping = (1 << 30),
-  entity_flag_falling = (1 << 29),
-  entity_flag_simming = (1 << 28),
-  entity_on_ground    = (1 << 28),
+  entity_flag_jumping = (1 << 1),
+  entity_flag_falling = (1 << 2),
+  entity_flag_simming = (1 << 3),
+  entity_on_ground    = (1 << 4),
 };
 
 struct SimEntity{

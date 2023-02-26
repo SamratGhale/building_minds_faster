@@ -4,7 +4,6 @@
 #pragma comment(lib, "xinput.lib")
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "user32.lib")
-#pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "Gdi32.lib")
 #define Pi32 3.14159265359f
 
@@ -35,6 +34,6 @@ typedef double F64;
 #define array_count(Array)(sizeof(Array)/sizeof((Array)[0]))
 
 #define assert(expression)if(!(expression)){*(int*)0 =0;}
-#define PLATFORM_COMMON
 
+#define PLATFORM_COMMON
 #endif //GUI_PLATFORM_H
