@@ -10,6 +10,25 @@
 global_variable B32 running = 1;
 global_variable OffscreenBuffer back_buffer;
 
+//file struffs
+
+inline U64 get_file_time(char* file_name){
+  FILETIME last_write_time = {};
+  WIN32_FILE_ATTRIBUTE_DATA data;
+  if(GetFileAttributesEx(file_name, GetFileExInfoStandard, &data)){
+    last_write_time = data.ftLastWriteTime;
+  }
+  U64 ret = (__int64(last_write_time.dwHighDateTime)<<32) | __int64(last_write_time.dwLowDateTime);
+  return ret;
+}
+
+inline B32 is_file_changed(S64 arg1, S64 arg2){
+  if(CompareFileTime((FILETIME*)&arg1, (FILETIME*)&arg2) != 0){
+    return 1;
+  }
+  return 0;
+}
+
 //File read and write functions
 
 function ReadFileResult read_entire_file(char* file_name){

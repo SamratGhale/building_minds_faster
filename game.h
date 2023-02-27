@@ -2,6 +2,7 @@
 
 #include "world.h"
 #include "sim_region.h"
+#include "parser.cpp"
 
 
 struct LowEntity{
@@ -42,6 +43,7 @@ struct GameState{
   B32 is_initilized;
   S32 controlled_entity_index[5];
   S32 player_index;
+  Config tokens;
 };
 
 #define GAME_H

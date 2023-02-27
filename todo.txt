@@ -1,1 +1,2 @@
 TODO:
+write a program to read a config file and make a config file format

@@ -87,6 +87,8 @@ struct ReadFileResult{
 };
 
 function ReadFileResult read_entire_file(char* file_name);
+inline U64 get_file_time(char* file_name);
+inline B32 is_file_changed(S64 arg1, S64 arg2);
 
 #endif
 
