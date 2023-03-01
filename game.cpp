@@ -11,6 +11,8 @@ function U32 denormalize_color(F32 R, F32 G, F32 B) {
 
 //TODO: associate PNG(pixel) data to entities, every data should be connected to a entity
 global_variable ImageU32 background_png;
+global_variable ImageU32 player_right_png;
+global_variable ImageU32 player_left_png;
 
 struct MoveSpec {
   B32 unit_max_accel_vector;
@@ -94,22 +96,18 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
 #define MAX(a,b)(((a)>(b))?(a):(b))
 function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x, F32 p_delta_y, F32 *t_min, F32 min_y, F32 max_y) {
   B32 hit = false;
-  F32 t_epsilon = 0.0001f;
+  F32 t_epsilon = 0.001f;
   if (p_delta_x != 0.0f) {
     F32 t_result = (wall_x - rel_x) / p_delta_x;
     F32 y = rel_y + t_result * p_delta_y;
     if ((t_result >= 0.0f) && (*t_min > t_result)) {
       if ((y >= min_y) && (y <= max_y)) {
-	*t_min = MAX(0.0f, t_result - t_epsilon);
-
-	char arr[255];
-	sprintf(arr, "Hit = %.5f\n", *t_min);
-	OutputDebugStringA(arr);
-	hit = true;
-      }
-    }
-  }
-  return hit;
+       *t_min = MAX(0.0f, t_result - t_epsilon);
+       hit = true;
+     }
+   }
+ }
+ return hit;
 }
 
 function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, MoveSpec* move_spec, V2 ddP) {
@@ -135,54 +133,73 @@ function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, Mov
 
     for (S32 i = 0; i < sim_region->entity_count; i += 1) {
       if (i != entity->storage_index) {
-	SimEntity * test_entity = sim_region->entities + i;
-	F32 diameter_w = test_entity->width + entity->width;
-	F32 diameter_h = test_entity->height + entity->height;
-	V2 min_corner = -0.5f*V2{ diameter_w, diameter_h };
-	V2 max_corner = 0.5f*V2{ diameter_w, diameter_h };
+       SimEntity * test_entity = sim_region->entities + i;
+       F32 diameter_w = test_entity->width + entity->width;
+       F32 diameter_h = test_entity->height + entity->height;
+       V2 min_corner = -0.5f*V2{ diameter_w, diameter_h };
+       V2 max_corner = 0.5f*V2{ diameter_w, diameter_h };
 
-	V2 rel = entity->pos - test_entity->pos;
+       V2 rel = entity->pos - test_entity->pos;
 
-	if (test_wall(min_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
-	  wall_normal = V2{ -1, 0 };
-	  hit_entity_index = i;
-	}
-	if (test_wall(max_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
-	  wall_normal = V2{ 1, 0 };
-	  hit_entity_index = i;
-	}
-	if (test_wall(max_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
-	  wall_normal = V2{ 0, 1 };
-	  hit_entity_index = i;
-	  clear_flag(entity, entity_flag_falling);
-	}
-	if (test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
-	  wall_normal = V2{ 0, -1 };
-	  hit_entity_index = i;
-	  add_flag(entity, entity_on_ground);
-	  clear_flag(entity, entity_flag_falling);
-	}
-      }
-    }
+       if (test_wall(min_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
+         wall_normal = V2{ -1, 0 };
+         hit_entity_index = i;
+       }
+       if (test_wall(max_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min, min_corner.y, max_corner.y)) {
+         wall_normal = V2{ 1, 0 };
+         hit_entity_index = i;
+       }
+       if (test_wall(max_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
+         wall_normal = V2{ 0, 1 };
+         hit_entity_index = i;
+         clear_flag(entity, entity_flag_falling);
+       }
+       if (test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
+         wall_normal = V2{ 0, -1 };
+         hit_entity_index = i;
+	  //add_flag(entity, entity_on_ground);
+	  //clear_flag(entity, entity_flag_falling);
+       }
+     }
+   }
 
-    entity->pos += t_min * delta;
-    if (hit_entity_index = -1) {
-      entity->dP = entity->dP - 1 * inner(entity->dP, wall_normal)* wall_normal;
-      delta = desired_pos - entity->pos;
-      delta = delta - 1 * inner(delta, wall_normal)* wall_normal;
-    }
-    else {
-      if (is_flag_set(entity, entity_on_ground)) {
-	clear_flag(entity, entity_on_ground);
-      }
-      else {
-	if (!is_flag_set(entity, entity_flag_jumping)) {
-	  add_flag(entity, entity_flag_falling);
-	}
-      }
-      break;
-    }
+   entity->pos += t_min * delta;
+   if (hit_entity_index != -1) {
+    entity->dP = entity->dP - 1 * inner(entity->dP, wall_normal)* wall_normal;
+    delta = desired_pos - entity->pos;
+    delta = delta - 1 * inner(delta, wall_normal)* wall_normal;
   }
+  else {
+    clear_flag(entity, entity_on_ground);
+    if (!is_flag_set(entity, entity_flag_jumping)) {
+     add_flag(entity, entity_flag_falling);
+   }
+   break;
+ }
+}
+if((entity->dP.x == 0.0f) && (entity->dP.x == 0.0f)) {
+}
+else if(ABS(entity->dP.x) > ABS(entity->dP.y)) {
+  if(entity->dP.x > 0) {
+	  entity->face_direction = 0;//right 
+  }
+  else {
+	  entity->face_direction = 2;//left
+  }
+}
+    /**
+    else
+    {
+        if(Entity->dP.Y > 0)
+        {
+            Entity->FacingDirection = 1;
+        }
+        else
+        {
+            Entity->FacingDirection = 3;
+        }
+    }
+    **/
 }
 
 function void draw_rectangle(OffscreenBuffer* buffer, S32 min_x, S32 min_y, S32 max_x, S32 max_y, U32 color) {
@@ -200,7 +217,7 @@ function void draw_rectangle(OffscreenBuffer* buffer, S32 min_x, S32 min_y, S32 
   for (S32 Y = min_y; Y < max_y; Y++) {
     U32* pixels = (U32*)row;
     for (S32 X = min_x; X < max_x; X++)  *pixels++ = color;
-    row += buffer->pitch;
+      row += buffer->pitch;
   }
 }
 
@@ -247,8 +264,8 @@ function AddLowEntityResult add_low_entity(GameState* game_state, EntityType typ
 function AddLowEntityResult add_player(GameState* game_state, WorldPosition pos) {
   U32 color = denormalize_color(0.4f, 0.2f, 0.2f);
   AddLowEntityResult entity = add_low_entity(game_state, entity_type_player, pos, color);
-  entity.low->sim.height = 3.0f;
-  entity.low->sim.width = 3.0f;
+  entity.low->sim.height = 6.5f;
+  entity.low->sim.width = 5.0f;
   return entity;
 }
 
@@ -264,11 +281,12 @@ function AddLowEntityResult add_wall(GameState* game_state, S32 chunk_x, S32 chu
   return entity;
 }
 
-function void render_entities2(Rec2* cam_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, GameState* game_state) {
+function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, GameState* game_state) {
 
   //First find out the min and max corner so that we can know which chunks are required
   World* world = game_state->world;
 
+  //TODO fix this
   WorldPosition min_chunk = map_into_world_position(game_state->world, camera_pos, get_min_corner(*cam_bounds));
   WorldPosition max_chunk = map_into_world_position(game_state->world, camera_pos, get_max_corner(*cam_bounds));
 
@@ -276,73 +294,56 @@ function void render_entities2(Rec2* cam_bounds, WorldPosition* camera_pos, Offs
     for (S32 x = min_chunk.chunk_x; x <= max_chunk.chunk_x; x++) {
       WorldChunk* chunk = get_world_chunk(world, x, y);
       while (chunk) {
-	EntityNode* node = chunk->node;
-	while (node) {
-	  LowEntity* low_entity = game_state->low_entities + node->entity_index;
-	  V2 entity_cam_space = subtract(game_state->world, &low_entity->pos, camera_pos);
-	  if (is_in_rectangle(*cam_bounds, entity_cam_space)) {
-	    SimEntity *entity = &low_entity->sim;
-	    switch (entity->type) {
-	    case entity_type_player:
-	    case entity_type_wall: {
-	      F32 mps = world->meters_to_pixels;
-	      S32 center_x = (camera_pos->offset.x*mps + (world->chunk_size_in_pixels*0.5f)) + (entity->pos.x * mps);
-	      S32 center_y = (camera_pos->offset.y*mps + (world->chunk_size_in_pixels*0.5f)) - (entity->pos.y * mps);
-	      S32 min_x = center_x - (entity->width  *  world->meters_to_pixels) / 2;
-	      S32 min_y = center_y - (entity->height *  world->meters_to_pixels) / 2;
-	      S32 max_x = center_x + (entity->width  *  world->meters_to_pixels) / 2;
-	      S32 max_y = center_y + (entity->height *  world->meters_to_pixels) / 2;
-	      draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
-	    }break;
-	    case entity_type_npc: {
-	    }break;
-	    case entity_type_null: {
+       EntityNode* node = chunk->node;
+       while (node) {
+         LowEntity* low_entity = game_state->low_entities + node->entity_index;
+         V2 entity_cam_space = subtract(game_state->world, &low_entity->pos, camera_pos);
+         if (is_in_rectangle(*cam_bounds, entity_cam_space)) {
+           SimEntity *entity = &low_entity->sim;
+           switch (entity->type) {
+            case entity_type_player:{
+              F32 mtop = world->meters_to_pixels;
+              F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
+              F32 center_y = (world->chunk_size_in_pixels*0.5f) - (entity->pos.y * mtop);
+              S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
+              S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
+              S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
+              S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
+	     //draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
+              if(entity->face_direction == 0){
+                draw_bitmap(buffer, &player_right_png, min_x+3, min_y);
+              }else if(entity->face_direction == 2){
+                draw_bitmap(buffer, &player_left_png, min_x+3, min_y);
+              }
+
+            }break;
+            case entity_type_wall: {
+              F32 mtop = world->meters_to_pixels;
+              F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
+              F32 center_y = (world->chunk_size_in_pixels*0.5f) - (entity->pos.y * mtop);
+              S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
+              S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
+              S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
+              S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
+              draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
+            }break;
+            case entity_type_npc: {
+            }break;
+            case entity_type_null: {
 	      //Do nothing
-	    }break;
-	    }
-	  }
-	  node = node->next;
-	}
-	chunk = chunk->next;
+            }break;
+          }
+        }
+        node = node->next;
       }
-    }
-  }
-
-}
-
-function void render_entities(Rec2 * camera_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, SimRegion *sim_region) {
-
-  SimEntity * entity = sim_region->entities;
-  World* world = sim_region->world;
-
-  for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
-    switch (entity->type) {
-    case entity_type_player:
-    case entity_type_wall: {
-
-      F32 mps = world->meters_to_pixels;
-      S32 center_x = (camera_pos->offset.x*mps + (world->chunk_size_in_pixels*0.5f)) + (entity->pos.x * mps);
-      S32 center_y = (camera_pos->offset.y*mps + (world->chunk_size_in_pixels*0.5f)) - (entity->pos.y * mps);
-
-      S32 min_x = center_x - (entity->width  *  world->meters_to_pixels) / 2;
-      S32 min_y = center_y - (entity->height *  world->meters_to_pixels) / 2;
-      S32 max_x = center_x + (entity->width  *  world->meters_to_pixels) / 2;
-      S32 max_y = center_y + (entity->height *  world->meters_to_pixels) / 2;
-      draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
-    }break;
-    case entity_type_npc: {
-    }break;
-    case entity_type_null: {
-      //Do nothing
-    }break;
+      chunk = chunk->next;
     }
   }
 }
+}
 
-#define ABS(num)(num>=0?num:(-1*num))
 #define ended_down(b, C)((C->b.ended_down)? 1 :0)
 #define was_down(b, C)((!C->b.ended_down && C->b.half_transition_count)?1:0)
-
 
 function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state, GameInput* input) {
 
@@ -357,7 +358,10 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     World *world = game_state->world;
 
     game_state->camera_p = create_world_pos(0, 0, 0, 0);
-    background_png = parse_png("../data/background_smool.png");
+    background_png = parse_png("../data/background_biggie.png");
+
+    player_right_png = parse_png("../data/character_smoll.png");
+    player_left_png = parse_png("../data/character_smoll_left.png");
 
     //TODO: put low_entitites in the world instead of game_state
     for (U32 i = 0; i < array_count(game_state->low_entities); i++) {
@@ -392,7 +396,7 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
           F32 rel_y = 0.0f;
           S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_x, &chunk_y, &rel_x, &rel_y);
           if (assigned == 4) {
-            add_wall(game_state, chunk_x, chunk_y, V2{ rel_x, rel_y }, 5.0f, 5.0f);
+            add_wall(game_state, chunk_x, chunk_y, V2{ rel_x, rel_y }, 5.0f, 2.0f);
           }
           else {
             assert(0);
@@ -404,7 +408,7 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
   //Background color
   paint_buffer(buffer, 0.4f, 0.9f, 0.3f);
-  draw_bitmap(buffer, &background_png, 0, 0);
+  //draw_bitmap(buffer, &background_png, 0, 0);
   World* world = game_state->world;
 
   V2 player_ddp = {}; //acceleration
@@ -471,8 +475,6 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     }
   }
 
-
-  //render_entities(buffer, game_state);
   MemoryArena sim_arena;
   initilize_arena(&sim_arena, platform_state->temporary_storage_size, platform_state->temporary_storage);
   SimRegion* sim_region = begin_sim(&sim_arena, game_state, game_state->world, game_state->camera_p, game_state->camera_bounds);
@@ -481,19 +483,23 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
   SimEntity* entity = sim_region->entities;
   for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
     switch (entity->type) {
-    case entity_type_player: {
-      if (entity->type == entity_type_player) {
-	MoveSpec spec = default_move_spec();
-	spec.unit_max_accel_vector = 1;
-	spec.speed = 18.61f;
-	spec.drag = 1.0f;
-	move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
-      }
-    }
-    }
-  }
-  end_sim(sim_region, game_state);
-  render_entities2(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
+      case entity_type_player: {
+        if (entity->type == entity_type_player) {
+         MoveSpec spec = default_move_spec();
+         spec.unit_max_accel_vector = 1;
+         spec.speed = 28.61f;
+         spec.drag = 2.0f;
+         move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
+       }
+     }
+   }
+ }
+ end_sim(sim_region, game_state);
+
+ if(game_state->player_index){
+   update_camera(game_state);
+ }
+ render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
 }
 
 

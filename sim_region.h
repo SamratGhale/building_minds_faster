@@ -29,6 +29,7 @@ struct SimEntity{
 
   U32 flags;
   F32 jump_time;
+  S32 face_direction;
   //No showord stuff
 };
 

@@ -2,6 +2,13 @@
 #define WIN32_TREE
 
 #include <windows.h>
+//TODO: this should not be here
+#pragma comment(lib, "xinput.lib")
+#pragma comment(lib, "dwmapi.lib")
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "Gdi32.lib")
+#pragma comment(lib, "opengl32.lib")
+
 #include "math.h"
 
 struct OffscreenBuffer{

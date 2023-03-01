@@ -1,10 +1,8 @@
 #ifndef PLATFORM_COMMON
 #include <stdint.h>
 
-#pragma comment(lib, "xinput.lib")
-#pragma comment(lib, "dwmapi.lib")
-#pragma comment(lib, "user32.lib")
-#pragma comment(lib, "Gdi32.lib")
+
+
 #define Pi32 3.14159265359f
 
 #define local_persist static

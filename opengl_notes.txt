@@ -1,0 +1,22 @@
+opengl notes
+there is GPU ALU and opengl GPU ram
+ALU      -> very wide instructions, slower clock cycles than cpu
+GPU-RAM  -> mappped memory, or assigned memory
+
+DMA controller -> instructions about mapping PC-RAM memory to GPU-ram using GPU's bus controller
+
+GPU dosen't have any context about the HARD-DISK
+
+
+Communicating with the gpu 
+--------------------------
+
+push buffer -> the instructions we send to the gpu in buffer, which the gpu will read and execute the instructions on the buffer.
+
+Ring-Transition, Ring 0, Ring 1 (privilage level) (user has no priviliage)(but the kernel has all the privilage)
+
+Rings of privilage ensures that it happens (driver code is ring 0)
+
+KICKOFF (os signal?) -> start executing the pushbuffer in the graphics card
+The push buffer format in the GPU is different in every graphics card, openg gl translates/construct it for us
+

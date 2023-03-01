@@ -1,2 +1,6 @@
 TODO:
-write a program to read a config file and make a config file format
+
+Bug fixes:
+1. Check the arena state after the config file has been loaded
+
+

@@ -1,6 +1,8 @@
 #ifndef GRID_MATH_H
 #include <math.h>
 
+#define ABS(num)(num>=0?num:(-1*num))
+
 union V2 {
   struct {
     F32 x, y;

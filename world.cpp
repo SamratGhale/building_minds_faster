@@ -1,5 +1,19 @@
 #include "world.h"
 #include "game.h"
+#include <stdio.h>
+
+inline void print_world_pos(WorldPosition pos){
+  char buff[255];
+  sprintf(buff, "chunk_x = %d, chunk_y = %d, x = %.2f, y = %.2f\n",pos.chunk_x, pos.chunk_y, pos.offset.x, pos.offset.y);
+  OutputDebugStringA(buff);
+}
+
+inline void print_v2(V2 pos){
+  char buff[128];
+  sprintf(buff, "x = %.2f, y = %.2f\n", pos.x, pos.y);
+  OutputDebugStringA(buff);
+}
+
 
 inline B32 is_valid(WorldPosition p) {
   B32 result = (p.chunk_x != TILE_CHUNK_UNINITILIZED);
@@ -146,11 +160,10 @@ inline WorldPosition map_into_world_position(World* world, WorldPosition* origin
 
 inline V2 subtract(World* world, WorldPosition* a, WorldPosition* b) {
   V2 result = {};
-  //This is chunk part
   result.y = a->chunk_y - b->chunk_y;
   result.x = a->chunk_x - b->chunk_x;
   result = result * world->chunk_size_in_meters;
-  result += (a->offset - b->offset);
+  result = result + (a->offset - b->offset);
   return result;
 }
 
@@ -160,4 +173,23 @@ function WorldPosition create_world_pos(S32 chunk_x, S32 chunk_y, F32 off_x, F32
   result.chunk_y = chunk_y;
   result.offset = V2{ off_x, off_y };
   return result;
+}
+
+function void update_camera(GameState* game_state){
+  //Update when the player is certain % at right or left
+
+  LowEntity* player = game_state->low_entities + game_state->player_index;
+  WorldPosition* camera = &game_state->camera_p;
+  V2 entity_cam_space = subtract(game_state->world, &player->pos, &game_state->camera_p);
+
+  print_v2(entity_cam_space);
+  if(entity_cam_space.x > 10.0f){
+    game_state->camera_p.offset.x += .2f;
+    adjust_world_positon(game_state->world, &camera->chunk_x, &camera->offset.x);
+  }
+  else if( entity_cam_space.x < -10.0f ){
+    game_state->camera_p.offset.x -= .2f;
+    adjust_world_positon(game_state->world, &camera->chunk_x, &camera->offset.x);
+  }
+  game_state->camera_p.chunk_y = player->pos.chunk_y;
 }

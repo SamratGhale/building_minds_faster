@@ -5,10 +5,12 @@ function void parse_commands(const char* file_name, Config* tokens) {
   char* curr = (char*)file.contents;
   for (S32 i = 0; i < file.content_size; i++) {
     if (curr[0] == '\n' || i == 0) {
+
       if (curr[0] == '\n') {
         curr++;
       }
       tokens->tokens[tokens->count].base = curr;
+
       if (strncmp("add_wall", tokens->tokens[tokens->count].base, 8) == 0) {
         tokens->tokens[tokens->count].type = command_add_wall;
         tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 9;
