@@ -22,8 +22,8 @@ function void write_image_top_down_rgba(U32 width, U32 height, U8 *pixels) {
       U32 C0 = swap_rb(*Pix0);
       U32 C1 = swap_rb(*Pix1);
 
-      *Pix0++ = C1;
-      *Pix1++ = C0;
+      *Pix0++ = C0;
+      *Pix1++ = C1;
     }
     Row0 += width;
     Row1 -= width;

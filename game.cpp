@@ -57,7 +57,7 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
 
   // TODO(casey): SourceRow needs to be changed based on clipping.
   U32 *SourceRow = bitmap->pixels + bitmap->width*(bitmap->height - 1);
-  SourceRow += -SourceOffsetY * bitmap->width + SourceOffsetX;
+  SourceRow += SourceOffsetY * bitmap->width + SourceOffsetX;
 
   U8 *DestRow = ((U8*)buffer->memory + MinX * buffer->bytes_per_pixel + MinY * buffer->pitch);
 
@@ -304,7 +304,7 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
             case entity_type_player:{
               F32 mtop = world->meters_to_pixels;
               F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
-              F32 center_y = (world->chunk_size_in_pixels*0.5f) - (entity->pos.y * mtop);
+              F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
               S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
               S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
               S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
@@ -320,7 +320,7 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
             case entity_type_wall: {
               F32 mtop = world->meters_to_pixels;
               F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
-              F32 center_y = (world->chunk_size_in_pixels*0.5f) - (entity->pos.y * mtop);
+              F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
               S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
               S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
               S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);

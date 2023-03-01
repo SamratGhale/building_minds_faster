@@ -70,7 +70,7 @@ function F32 process_stick_value(SHORT value, SHORT dead_zone) {
 }
 
 function void display_buffer_in_window(OffscreenBuffer* buffer, HDC dc, S32 width, S32 height) {
-  #if 0
+  #if 1
   StretchDIBits(dc, 0, 0, buffer->width, buffer->height, 0, 0, buffer->width, buffer->height, buffer->memory, &buffer->info, DIB_RGB_COLORS, SRCCOPY);
   #else
   glViewport(0, 0, width, height);
@@ -142,10 +142,10 @@ function void resize_buffer(OffscreenBuffer* buffer, int width, int height) {
   buffer->height = height;
   buffer->info.bmiHeader.biSize = sizeof(buffer->info.bmiHeader);
   buffer->info.bmiHeader.biCompression = BI_RGB;
-  buffer->info.bmiHeader.biPlanes = 1;
+  buffer->info.bmiHeader.biPlanes   = 1;
   buffer->info.bmiHeader.biBitCount = 32;
-  buffer->info.bmiHeader.biWidth = buffer->width;
-  buffer->info.bmiHeader.biHeight = -buffer->height;
+  buffer->info.bmiHeader.biWidth    = buffer->width;
+  buffer->info.bmiHeader.biHeight   = buffer->height;
   buffer->bytes_per_pixel = 4;
   buffer->pitch = width * buffer->bytes_per_pixel;
   int BitmapMemorySize = buffer->width * buffer->height * buffer->bytes_per_pixel;
@@ -265,7 +265,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR command_
   HWND window = CreateWindowEx(0,window_class.lpszClassName,"Playing around", WS_OVERLAPPED | WS_VISIBLE , CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,  0, 0, instance, 0);
 
   //Remove maximize window
-  SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZEBOX); 
+  //SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZEBOX); 
 
   //Window init finish
   RECT rect;
