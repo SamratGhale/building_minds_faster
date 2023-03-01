@@ -55,6 +55,60 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
     MaxY = buffer->height;
   }
 
+  #if 1
+  glViewport(MinX, MinY, MaxX, MaxY);
+  GLuint texture_handle = 0;
+  glGenTextures(1, &texture_handle);
+  glBindTexture(GL_TEXTURE_2D, texture_handle);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap->width, bitmap->height, 0,
+   GL_BGRA_EXT, GL_UNSIGNED_BYTE, bitmap->pixels);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);    
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);    
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  glEnable(GL_TEXTURE_2D);
+  
+  glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glBegin(GL_TRIANGLES);
+  
+  F32 P = 1.0f;
+
+    // NOTE(casey): Lower triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 0.0f);
+  glVertex2f(P, -P);
+  
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+    // NOTE(casey): Upper triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+  glTexCoord2f(0.0f, 1.0f);
+  glVertex2f(-P, P);
+
+  glEnd();
+  #else
+
   // TODO(casey): SourceRow needs to be changed based on clipping.
   U32 *SourceRow = bitmap->pixels + bitmap->width*(bitmap->height - 1);
   SourceRow += SourceOffsetY * bitmap->width + SourceOffsetX;
@@ -89,6 +143,7 @@ function void draw_bitmap(OffscreenBuffer *buffer, ImageU32 *bitmap, F32 RealX, 
     DestRow += buffer->pitch;
     SourceRow -= bitmap->width;
   }
+  #endif
 }
 
 
@@ -213,12 +268,57 @@ function void draw_rectangle(OffscreenBuffer* buffer, S32 min_x, S32 min_y, S32 
   if (min_y > buffer->height) min_y = buffer->height;
 
   //pitch has bytePerPixel
+  #if 1
+  glViewport(min_x, min_y, max_x, max_y);
+  //glClearColor()
+  //glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+  //glClear(GL_COLOR_BUFFER_BIT);
+
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glBegin(GL_TRIANGLES);
+
+  glEnable(GL_COLOR_MATERIAL);
+  //glColor(1.0f, 1.0f, 0.0f);
+
+  F32 P = 1.0f;
+
+    // NOTE(casey): Lower triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 0.0f);
+  glVertex2f(P, -P);
+  
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+    // NOTE(casey): Upper triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+  glTexCoord2f(0.0f, 1.0f);
+  glVertex2f(-P, P);
+
+  glEnd();
+
+  #else
   U8* row = (U8*)buffer->memory + min_y * buffer->pitch + min_x * buffer->bytes_per_pixel;
   for (S32 Y = min_y; Y < max_y; Y++) {
     U32* pixels = (U32*)row;
     for (S32 X = min_x; X < max_x; X++)  *pixels++ = color;
       row += buffer->pitch;
   }
+  #endif
 }
 
 function void paint_buffer(OffscreenBuffer* buffer, F32 r, F32 g, F32 b) {
@@ -301,44 +401,44 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
          if (is_in_rectangle(*cam_bounds, entity_cam_space)) {
            SimEntity *entity = &low_entity->sim;
            switch (entity->type) {
-            case entity_type_player:{
-              F32 mtop = world->meters_to_pixels;
-              F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
-              F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
-              S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
-              S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
-              S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
-              S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
+           case entity_type_player:{
+            F32 mtop = world->meters_to_pixels;
+            F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
+            F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
+            S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
+            S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
+            S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
+            S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
 	     //draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
-              if(entity->face_direction == 0){
-                draw_bitmap(buffer, &player_right_png, min_x+3, min_y);
-              }else if(entity->face_direction == 2){
-                draw_bitmap(buffer, &player_left_png, min_x+3, min_y);
-              }
+            if(entity->face_direction == 0){
+              draw_bitmap(buffer, &player_right_png, min_x+3, min_y);
+            }else if(entity->face_direction == 2){
+              draw_bitmap(buffer, &player_left_png, min_x+3, min_y);
+            }
 
-            }break;
-            case entity_type_wall: {
-              F32 mtop = world->meters_to_pixels;
-              F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
-              F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
-              S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
-              S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
-              S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
-              S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
-              draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
-            }break;
-            case entity_type_npc: {
-            }break;
-            case entity_type_null: {
+          }break;
+        case entity_type_wall: {
+          F32 mtop = world->meters_to_pixels;
+          F32 center_x = (world->chunk_size_in_pixels*0.5f) + (entity->pos.x * mtop);
+          F32 center_y = (world->chunk_size_in_pixels*0.5f) + (entity->pos.y * mtop);
+          S32 min_x = center_x - (F32)((entity->width  *  mtop) *0.5f);
+          S32 min_y = center_y - (F32)((entity->height *  mtop) *0.5f)-1;
+          S32 max_x = center_x + (F32)((entity->width  *  mtop) *0.5f);
+          S32 max_y = center_y + (F32)((entity->height *  mtop) *0.5f);
+          draw_rectangle(buffer, min_x, min_y, max_x, max_y, entity->color);
+        }break;
+      case entity_type_npc: {
+      }break;
+    case entity_type_null: {
 	      //Do nothing
-            }break;
-          }
-        }
-        node = node->next;
-      }
-      chunk = chunk->next;
-    }
+    }break;
   }
+}
+node = node->next;
+}
+chunk = chunk->next;
+}
+}
 }
 }
 
@@ -389,27 +489,27 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     for (U32 i = 0; i < tokens->count; i++) {
       ConfigToken curr = tokens->tokens[i];
       switch (curr.type) {
-        case(command_add_wall): {
-          S32 chunk_x = 0;
-          S32 chunk_y = 0;
-          F32 rel_x = 0.0f;
-          F32 rel_y = 0.0f;
-          S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_x, &chunk_y, &rel_x, &rel_y);
-          if (assigned == 4) {
-            add_wall(game_state, chunk_x, chunk_y, V2{ rel_x, rel_y }, 5.0f, 2.0f);
-          }
-          else {
-            assert(0);
-          }
-        }break;
-      }
+      case(command_add_wall): {
+        S32 chunk_x = 0;
+        S32 chunk_y = 0;
+        F32 rel_x = 0.0f;
+        F32 rel_y = 0.0f;
+        S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_x, &chunk_y, &rel_x, &rel_y);
+        if (assigned == 4) {
+          add_wall(game_state, chunk_x, chunk_y, V2{ rel_x, rel_y }, 5.0f, 2.0f);
+        }
+        else {
+          assert(0);
+        }
+      }break;
     }
   }
+}
 
   //Background color
-  paint_buffer(buffer, 0.4f, 0.9f, 0.3f);
-  //draw_bitmap(buffer, &background_png, 0, 0);
-  World* world = game_state->world;
+  //paint_buffer(buffer, 0.4f, 0.9f, 0.3f);
+draw_bitmap(buffer, &background_png, 0, 0);
+World* world = game_state->world;
 
   V2 player_ddp = {}; //acceleration
   for (S32 i = 0; i < array_count(input->controllers); i += 1) {
@@ -483,23 +583,23 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
   SimEntity* entity = sim_region->entities;
   for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
     switch (entity->type) {
-      case entity_type_player: {
-        if (entity->type == entity_type_player) {
-         MoveSpec spec = default_move_spec();
-         spec.unit_max_accel_vector = 1;
-         spec.speed = 28.61f;
-         spec.drag = 2.0f;
-         move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
-       }
+    case entity_type_player: {
+      if (entity->type == entity_type_player) {
+       MoveSpec spec = default_move_spec();
+       spec.unit_max_accel_vector = 1;
+       spec.speed = 28.61f;
+       spec.drag = 2.0f;
+       move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
      }
    }
  }
- end_sim(sim_region, game_state);
+}
+end_sim(sim_region, game_state);
 
- if(game_state->player_index){
-   update_camera(game_state);
- }
- render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
+if(game_state->player_index){
+ update_camera(game_state);
+}
+render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
 }
 
 

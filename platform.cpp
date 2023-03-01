@@ -6,10 +6,12 @@
 #include "platform.h"
 #include "intrinsics.h"
 #include "game.cpp"
+#include <gl/gl.h>
 
 //Global variables
 global_variable B32 running = 1;
 global_variable OffscreenBuffer back_buffer;
+global_variable GLuint global_texture_handle;
 
 //file struffs
 
@@ -70,12 +72,65 @@ function F32 process_stick_value(SHORT value, SHORT dead_zone) {
 }
 
 function void display_buffer_in_window(OffscreenBuffer* buffer, HDC dc, S32 width, S32 height) {
-  #if 1
+  #if 0
   StretchDIBits(dc, 0, 0, buffer->width, buffer->height, 0, 0, buffer->width, buffer->height, buffer->memory, &buffer->info, DIB_RGB_COLORS, SRCCOPY);
   #else
+
+  /*
   glViewport(0, 0, width, height);
-  glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+
+  glBindTexture(GL_TEXTURE_2D, global_texture_handle);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buffer->width, buffer->height, 0,
+   GL_BGRA_EXT, GL_UNSIGNED_BYTE, buffer->memory);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);    
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);    
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  glEnable(GL_TEXTURE_2D);
+
+  //glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+  //glClear(GL_COLOR_BUFFER_BIT);
+
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+
+  glBegin(GL_TRIANGLES);
+  F32 P = .9f;
+
+    // NOTE(casey): Lower triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 0.0f);
+  glVertex2f(P, -P);
+
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+    // NOTE(casey): Upper triangle
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(-P, -P);
+
+  glTexCoord2f(1.0f, 1.0f);
+  glVertex2f(P, P);
+
+  glTexCoord2f(0.0f, 1.0f);
+  glVertex2f(-P, P);
+
+  glEnd();
+  */
+
   SwapBuffers(dc);
   #endif
 }
@@ -125,6 +180,7 @@ function void win32_init_opengl(HWND window){
   HGLRC opengl_rc = wglCreateContext(window_dc);
   if(wglMakeCurrent(window_dc, opengl_rc)){
     //SUCKCESs
+    glGenTextures(1, &global_texture_handle);
   }else{
     assert(0);
   }

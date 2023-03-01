@@ -30,6 +30,8 @@ struct SimEntity{
   U32 flags;
   F32 jump_time;
   S32 face_direction;
+
+  U32 texture_id;
   //No showord stuff
 };
 

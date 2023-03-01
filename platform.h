@@ -83,7 +83,6 @@ struct PlatformState{
   U64 total_size;
   U64 permanent_storage_size;
   U64 temporary_storage_size;
-
   void* permanent_storage;
   void* temporary_storage;
 };
