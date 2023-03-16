@@ -1,6 +1,1 @@
-TODO:
-
-Bug fixes:
-1. Check the arena state after the config file has been loaded
-
-
+make background (temples) the entities

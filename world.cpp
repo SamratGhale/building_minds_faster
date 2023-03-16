@@ -191,5 +191,13 @@ function void update_camera(GameState* game_state){
     game_state->camera_p.offset.x -= .2f;
     adjust_world_positon(game_state->world, &camera->chunk_x, &camera->offset.x);
   }
-  game_state->camera_p.chunk_y = player->pos.chunk_y;
+  if(entity_cam_space.y > 5.0f){
+    game_state->camera_p.offset.y += .2f;
+    adjust_world_positon(game_state->world, &camera->chunk_y, &camera->offset.y);
+  }
+  else if( entity_cam_space.y < -5.0f ){
+    game_state->camera_p.offset.y -= .2f;
+    adjust_world_positon(game_state->world, &camera->chunk_y, &camera->offset.y);
+  }
+  //game_state->camera_p.chunk_y = player->pos.chunk_y;
 }

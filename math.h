@@ -7,8 +7,17 @@ union V2 {
   struct {
     F32 x, y;
   };
-  
   F32 e[2];
+};
+
+union V4 {
+  struct {
+    F32 w, x, y, z;
+  };
+  struct {
+    F32 r, g, b, a;
+  };
+  F32 e[4];
 };
 
 inline V2 operator*(F32 a, V2 b){

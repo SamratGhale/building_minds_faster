@@ -27,12 +27,6 @@ inline void clear_flag(SimEntity* entity, U32 flag){
   entity->flags &= ~flag;
 }
 
-struct ImageU32{
-  U32 width;
-  U32 height;
-  U32 *pixels;
-};
-
 struct GameState{
   MemoryArena world_arena;
   World* world;
