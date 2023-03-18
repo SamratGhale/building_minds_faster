@@ -4,7 +4,8 @@ enum CommandEnum{
   command_set_camera_pos,
   command_set_player_pos,
   command_set_background_png,
-  command_add_temple
+  command_add_temple,
+  command_add_walls_around_chunk
 };
 
 struct ConfigToken{

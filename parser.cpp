@@ -9,15 +9,25 @@ function void parse_commands(const char* file_name, Config* tokens) {
         curr++;
       }
       tokens->tokens[tokens->count].base = curr;
-      if (strncmp("add_wall", tokens->tokens[tokens->count].base, 8) == 0) {
+      if (strncmp("end", tokens->tokens[tokens->count].base, 3) == 0) {
+        break;
+      }
+      if(strncmp("add_walls_around_chunk", tokens->tokens[tokens->count].base, 22) == 0){
+        tokens->tokens[tokens->count].type = command_add_walls_around_chunk;
+        tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 23;
+        tokens->tokens[tokens->count].command_len = 22;
+      }
+      else if (strncmp("add_wall", tokens->tokens[tokens->count].base, 8) == 0) {
         tokens->tokens[tokens->count].type = command_add_wall;
         tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 9;
         tokens->tokens[tokens->count].command_len = 8;
-      } else if (strncmp("camera_pos", tokens->tokens[tokens->count].base, 10) == 0) {
+      }
+       else if (strncmp("camera_pos", tokens->tokens[tokens->count].base, 10) == 0) {
         tokens->tokens[tokens->count].type = command_set_camera_pos;
         tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 11;
         tokens->tokens[tokens->count].command_len = 10;
-      }else if(strncmp("add_temple", tokens->tokens[tokens->count].base, 10) == 0){
+      }
+      else if(strncmp("add_temple", tokens->tokens[tokens->count].base, 10) == 0){
         tokens->tokens[tokens->count].type = command_add_temple;
         tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 11;
         tokens->tokens[tokens->count].command_len = 10;

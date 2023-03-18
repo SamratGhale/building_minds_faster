@@ -1,1 +1,2 @@
-make background (temples) the entities
+add wall around the chunk on one commmand
+//add_wall_around_chunk{0,0}

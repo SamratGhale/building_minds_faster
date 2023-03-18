@@ -27,6 +27,13 @@ inline void clear_flag(SimEntity* entity, U32 flag){
   entity->flags &= ~flag;
 }
 
+struct ChunkAnimation{
+  B32 is_active;
+  WorldPosition dest;
+  WorldPosition source;
+  S32 completed; //In %
+};
+
 struct GameState{
   MemoryArena world_arena;
   World* world;
@@ -38,6 +45,8 @@ struct GameState{
   S32 controlled_entity_index[5];
   S32 player_index;
   Config tokens;
+
+  ChunkAnimation chunk_animation;
 };
 
 #define GAME_H

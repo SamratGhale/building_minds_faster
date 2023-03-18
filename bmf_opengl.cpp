@@ -123,33 +123,102 @@ function OpenglInfo opengl_init(B32 modern_context){
 }
 
 
-void opengl_rectangle(V2 min_p, V2 max_p, V4 color){
+void opengl_rectangle( F32 min_x, F32 min_y, V4 color, ImageU32* image){
+  F32 width  = image->width;
+  F32 height = image->height;
+  F32 max_x  = min_x + width;
+  F32 max_y  = min_y + height;
 
-  glBegin(GL_TRIANGLES);
-  glColor4f(color.r, color.g, color.b, color.a);
+  V2 min_p = {(F32)min_x, (F32)min_y};
+  V2 max_p = {(F32)max_x, (F32)max_y};
 
-  //NOTE:lower triagnle
-  //glTexCoord2f(0.0f, 0.0f);
-  glVertex2f(min_p.x, min_p.y);
+  F32 one_tex_elu = 1.0f/(F32)image->width;
+  F32 one_tex_elv = 1.0f/(F32)image->height;
 
-  glTexCoord2f(1.0f, 0.0f);
-  glVertex2f(max_p.x, min_p.y);
 
-  glTexCoord2f(1.0f, 1.0f);
-  glVertex2f(max_p.x, max_p.y);
+  //The coordinates are always the same just change the position
+  F32 vertices[] = {
+    max_x,  max_y, 0.0f,   0.0f, 0.0f, // top right
+    max_x,  min_y, 0.0f,   0.0f, 1.0f, // bottom right
+    min_x,  min_y, 0.0f,   1.0f, 1.0f, // bottom left
+    min_x,  max_y, 0.0f,   1.0f, 0.0f  // top left 
+  };
 
-  //NOTE: upper triangle
-  glTexCoord2f(0.0f, 0.0f);
-  glVertex2f(min_p.x, min_p.y);
 
-  glTexCoord2f(1.0f, 1.0f);
-  glVertex2f(max_p.x, max_p.y);
+  //glActivateTexture(GL_TEXTURE0);
+  if(image->tex_handle != 0){
+    glBindTexture(GL_TEXTURE_2D, image->tex_handle);
+    glBindVertexArray(image->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, image->vbo);
+    //TODO: Change this
 
-  glTexCoord2f(0.0f, 1.0f);
-  glVertex2f(min_p.x, max_p.y);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+    V2 top_right    = V2{max_x, max_y};
+    V2 bottom_right = V2{max_x, min_y};
+    V2 bottom_left  = V2{min_x, min_y};
+    V2 top_left     = V2{min_x, max_y};
 
-  glEnd();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 2 * sizeof(float), (const GLvoid*)top_right.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 1 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_right.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 2 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_left.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 3 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)top_left.e);
+
+  }else{
+    glGenVertexArrays(1, &image->vao);
+    glGenBuffers(1, &image->vbo);
+    glGenBuffers(1, &image->ebo);
+
+    GLuint handle;
+    glGenTextures(1, &handle);
+    image->tex_handle = handle;
+    glBindTexture(GL_TEXTURE_2D, image->tex_handle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, image->pixels);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);    
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    U32 indices[] = {
+      0, 1, 3, //First triangle
+      1, 2, 3  //Second triangle
+    };
+    glBindVertexArray(image->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, image->vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, image->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+
+   }
+   glBindTexture(GL_TEXTURE_2D, 0);
+
+
+    //TODO: use GL_TRUE in normalized and use the world position?
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(F32), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(F32), (void*)(3 * sizeof(F32)));
+    glEnableVertexAttribArray(1);
+
+
+
+    GLuint xy_pos = glGetUniformLocation(opengl_config.basic_light_program, "xy_pos");
+    glUniform2i(xy_pos, min_x, min_y);
+    glBindVertexArray(image->vao);
+
+
+    glUseProgram(opengl_config.basic_light_program);
+    //glUniformMatrix4fv(opengl_config.transform_id, 1, GL_FALSE, &proj[0]);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //opengl_rectangle(min_p, max_p, V4{1,1 ,1,1});
+    glUseProgram(0);
+
 }
+
 
 inline void opengl_bitmap_test(F32 min_x, F32 min_y, ImageU32 *image, OffscreenBuffer* buffer){
   F32 width  = image->width;
@@ -163,8 +232,6 @@ inline void opengl_bitmap_test(F32 min_x, F32 min_y, ImageU32 *image, OffscreenB
   F32 one_tex_elu = 1.0f/(F32)image->width;
   F32 one_tex_elv = 1.0f/(F32)image->height;
 
-  V2 min_uv = V2{one_tex_elu, one_tex_elv};
-  V2 max_uv = V2{1.0f - one_tex_elu, 1.0f - one_tex_elv};
 
   //The coordinates are always the same just change the position
   F32 vertices[] = {

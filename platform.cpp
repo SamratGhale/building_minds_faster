@@ -55,8 +55,6 @@ typedef void   gl_active_texture(GLenum texture);
 typedef void   gl_uniform_2f(GLint location, GLfloat v0, GLfloat v1);
 typedef void   gl_buffer_sub_data(GLenum target, GLintptr offset, GLsizeiptr size, const void *data);
 
-
-
 global_variable gl_attach_shader *glAttachShader; 
 global_variable gl_compile_shader*glCompileShader; 
 global_variable gl_create_program*glCreateProgram; 
