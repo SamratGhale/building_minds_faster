@@ -1,11 +1,11 @@
-Chunk/Level Border
+chunk_pos/Level Border
 Current level on game_state
 
 Architectural game:
 
 NOTE: Entity storage and simulation
 
-one chunk/level has no collision and interaction with another chunk/level 
+one chunk_pos/level has no collision and interaction with another chunk_pos/level 
 algorithm for simulation
 
 
@@ -32,6 +32,55 @@ NOTE: that wat we wouldn't need to recompile everytime, helps in debugging
 
 
 Jumping code documentation
+
+
+Texture tile size is game's tile size
+One tile is one meter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

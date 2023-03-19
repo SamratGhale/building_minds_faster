@@ -127,8 +127,8 @@ inline void opengl_bitmap(ImageU32 *image, F32 min_x, F32 min_y, S32 width, S32 
   F32 max_x  = min_x + width;
   F32 max_y  = min_y + height;
 
-  V2 min_p = {(F32)min_x, (F32)min_y};
-  V2 max_p = {(F32)max_x, (F32)max_y};
+  V2_F32 min_p = {(F32)min_x, (F32)min_y};
+  V2_F32 max_p = {(F32)max_x, (F32)max_y};
 
   //The coordinates are always the same just change the position
   F32 vertices[] = {
@@ -145,10 +145,10 @@ inline void opengl_bitmap(ImageU32 *image, F32 min_x, F32 min_y, S32 width, S32 
     glBindVertexArray(image->vao);
     glBindBuffer(GL_ARRAY_BUFFER, image->vbo);
 
-    V2 top_right    = V2{max_x, max_y};
-    V2 bottom_right = V2{max_x, min_y};
-    V2 bottom_left  = V2{min_x, min_y};
-    V2 top_left     = V2{min_x, max_y};
+    V2_F32 top_right    = V2_F32{max_x, max_y};
+    V2_F32 bottom_right = V2_F32{max_x, min_y};
+    V2_F32 bottom_left  = V2_F32{min_x, min_y};
+    V2_F32 top_left     = V2_F32{min_x, max_y};
 
     glBufferSubData(GL_ARRAY_BUFFER, 0, 2 * sizeof(float), (const GLvoid*)top_right.e);
     glBufferSubData(GL_ARRAY_BUFFER, 1 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_right.e);
@@ -164,7 +164,7 @@ inline void opengl_bitmap(ImageU32 *image, F32 min_x, F32 min_y, S32 width, S32 
     glGenTextures(1, &handle);
     image->tex_handle = handle;
     glBindTexture(GL_TEXTURE_2D, image->tex_handle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, image->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width, image->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, image->pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);

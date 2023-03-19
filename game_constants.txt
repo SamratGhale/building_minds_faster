@@ -1,1 +1,1 @@
-chunk_size_in_meters : 40.f
+chunk_pos_size_in_meters : 40.f

@@ -36,7 +36,7 @@ function void * consume_size(StreamingBuffer *file, U32 size) {
   void *Result = 0;
 
   if ((file->size == 0) && file->first) {
-    StreamingChunk *This = file->first;
+    Streamingchunk_pos *This = file->first;
     file->size = This->size;
     file->contents = This->contents;
     file->first = This->next;
@@ -71,8 +71,8 @@ function void * allocate_pixels(U32 Width, U32 Height, U32 BPP, U32 ExtraBytes =
   return(Result);
 }
 
-function StreamingChunk * allocate_chunk(void) {
-  StreamingChunk *Result = (StreamingChunk *)malloc(sizeof(StreamingChunk));
+function Streamingchunk_pos * allocate_chunk_pos(void) {
+  Streamingchunk_pos *Result = (Streamingchunk_pos *)malloc(sizeof(Streamingchunk_pos));
   return(Result);
 }
 
@@ -338,19 +338,19 @@ function ImageU32 parse_png(const char* file_name) {
   if (FileHeader) {
     StreamingBuffer CompData = {};
     while (At->size > 0) {
-      PNGChunkHeader *ChunkHeader = CONSUME(At, PNGChunkHeader);
-      if (ChunkHeader) {
-        endian_swap(&ChunkHeader->Length);
-        endian_swap(&ChunkHeader->TypeU32);
+      PNGchunk_posHeader *chunk_posHeader = CONSUME(At, PNGchunk_posHeader);
+      if (chunk_posHeader) {
+        endian_swap(&chunk_posHeader->Length);
+        endian_swap(&chunk_posHeader->TypeU32);
 
-        void *chunk_data = consume_size(At, ChunkHeader->Length);
-        PNGChunkFooter *ChunkFooter = CONSUME(At, PNGChunkFooter);
-        endian_swap(&ChunkFooter->crc);
+        void *chunk_pos_data = consume_size(At, chunk_posHeader->Length);
+        PNGchunk_posFooter *chunk_posFooter = CONSUME(At, PNGchunk_posFooter);
+        endian_swap(&chunk_posFooter->crc);
 
-        if (ChunkHeader->TypeU32 == 'IHDR') {
+        if (chunk_posHeader->TypeU32 == 'IHDR') {
           //fprintf(stdout, "IHDR\n");
 
-          PNGIhdr *ihdr = (PNGIhdr*)chunk_data;
+          PNGIhdr *ihdr = (PNGIhdr*)chunk_pos_data;
 
           endian_swap(&ihdr->width);
           endian_swap(&ihdr->height);
@@ -362,13 +362,13 @@ function ImageU32 parse_png(const char* file_name) {
           }
 
         }
-        else if (ChunkHeader->TypeU32 == 'IDAT') {
-          //fprintf(stdout, "IDAT (%u)\n", ChunkHeader->Length);
-          StreamingChunk *chunk = allocate_chunk();
-          chunk->size = ChunkHeader->Length;
-          chunk->contents = chunk_data;
-          chunk->next = 0;
-          CompData.last = ((CompData.last ? CompData.last->next : CompData.first) = chunk);
+        else if (chunk_posHeader->TypeU32 == 'IDAT') {
+          //fprintf(stdout, "IDAT (%u)\n", chunk_posHeader->Length);
+          Streamingchunk_pos *chunk_pos = allocate_chunk_pos();
+          chunk_pos->size = chunk_posHeader->Length;
+          chunk_pos->contents = chunk_pos_data;
+          chunk_pos->next = 0;
+          CompData.last = ((CompData.last ? CompData.last->next : CompData.first) = chunk_pos);
         }
       }
     }

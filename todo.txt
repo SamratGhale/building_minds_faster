@@ -19,7 +19,7 @@
 ->Player movements
 ->Objects
 ->Points and stuffs
-->Connections between the Chunks
+->Connections between the chunk_poss
 ->Save and Load
 
 

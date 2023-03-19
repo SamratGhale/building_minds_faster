@@ -5,14 +5,15 @@ enum EntityType{
   entity_type_player,
   entity_type_npc,
   entity_type_wall,
-  entity_type_temple
+  entity_type_temple,
+  entity_type_grass,
+  entity_type_fire_torch
 };
 
 struct ImageU32{
   U32 width;
   U32 height;
   U32 *pixels;
-
   U32 tex_handle;
   U32 vbo;
   U32 vao;
@@ -29,8 +30,8 @@ enum EntityFlags{
 
 struct SimEntity{
   EntityType type;
-  V2 pos; //This is in meters
-  V2 dP; 
+  V2_F32 pos; //This is in meters
+  V2_F32 dP; 
 
   V4 color;
   
@@ -38,10 +39,11 @@ struct SimEntity{
   F32 height;
 
   F32 jump_time;
-
   B32 collides;
+
   U32 storage_index;
   U32 flags;
+  
   S32 face_direction;
   ImageU32* texture;
 };

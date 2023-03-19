@@ -37,7 +37,7 @@ typedef void   gl_get_shader_info_log(GLuint shader, GLsizei bufSize, GLsizei *l
 typedef GLint  gl_get_uniform_location(GLuint program, const GLchar *name);
 typedef void   gl_get_uniform_iv(GLuint program, GLint location, GLint *params);
 typedef void   gl_uniform_1i(GLint location, GLint v0);
-typedef void   gl_uniform_4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+typedef void   gl_uniform_4f(GLint location, GLfloat v0, GLfloat v1, GLfloat V2_F32, GLfloat v3);
 typedef void   gl_uniform_2i(GLint location, GLint v0, GLint v1);
 typedef void   gl_uniform_matrix_4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void   gl_bind_vertex_array(GLuint array);

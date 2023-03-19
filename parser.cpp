@@ -12,8 +12,8 @@ function void parse_commands(const char* file_name, Config* tokens) {
       if (strncmp("end", tokens->tokens[tokens->count].base, 3) == 0) {
         break;
       }
-      if(strncmp("add_walls_around_chunk", tokens->tokens[tokens->count].base, 22) == 0){
-        tokens->tokens[tokens->count].type = command_add_walls_around_chunk;
+      if(strncmp("add_walls_around_chunk_pos", tokens->tokens[tokens->count].base, 22) == 0){
+        tokens->tokens[tokens->count].type = command_add_walls_around_chunk_pos;
         tokens->tokens[tokens->count].args = tokens->tokens[tokens->count].base + 23;
         tokens->tokens[tokens->count].command_len = 22;
       }

@@ -1,10 +1,12 @@
 #ifndef WORLD
 #define TILE_CHUNK_UNINITILIZED INT32_MAX
 
+#define TILE_COUNT_PER_WIDTH  17
+#define TILE_COUNT_PER_HEIGHT 9
+
 struct WorldPosition{
-  S32 chunk_x; 
-  S32 chunk_y;
-  V2 offset;
+  V2_S32 chunk_pos; 
+  V2_F32 offset;
 };
 
 struct EntityNode{
@@ -13,17 +15,14 @@ struct EntityNode{
 };
 
 struct WorldChunk{
-  S32 chunk_x;
-  S32 chunk_y;
-
+  V2_S32 chunk_pos;
   U32 entity_count;
   EntityNode* node;
   WorldChunk* next;
 };
 
 struct World{
-  U32 chunk_size_in_pixels;
-  F32 chunk_size_in_meters;
+  V2_F32 chunk_size_in_meters;
   WorldChunk chunk_hash[128];
   S32 meters_to_pixels;
 };

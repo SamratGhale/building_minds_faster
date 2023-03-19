@@ -45,7 +45,6 @@ struct GameState{
   S32 controlled_entity_index[5];
   S32 player_index;
   Config tokens;
-
   ChunkAnimation chunk_animation;
 };
 

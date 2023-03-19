@@ -1,4 +1,4 @@
-function SimEntity* add_entity(GameState* game_state, SimRegion* region, U32 low_index, LowEntity* low_entity, V2* entity_rel_pos) {
+function SimEntity* add_entity(GameState* game_state, SimRegion* region, U32 low_index, LowEntity* low_entity, V2_F32* entity_rel_pos) {
   assert(low_index);
   SimEntity* entity = 0;
   if (region->entity_count < region->max_count) {
@@ -42,34 +42,27 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
   //TODO: take the world_position and get the camera_relative positon of
   //Min corner and max corner
 
-  WorldPosition min_chunk = map_into_world_position(world, &sim_region->center, get_min_corner(sim_region->bounds));
-  WorldPosition max_chunk = map_into_world_position(world, &sim_region->center, get_max_corner(sim_region->bounds));
+  WorldPosition min_chunk_pos = map_into_world_position(world, &sim_region->center, get_min_corner(sim_region->bounds));
+  WorldPosition max_chunk_pos = map_into_world_position(world, &sim_region->center, get_max_corner(sim_region->bounds));
 
-  //NOTE: alogrithm
-  //first go thru all the chunks        (first for loop)
-  //go thru each SimEntity in the chunk (second for loop)
-  //convert the world_position of the entity to the sim_position
-
-  //If the entity belongs to the simulation space then add to the sim entities array
-
-  for (S32 y = min_chunk.chunk_y; y <= max_chunk.chunk_y; y++) {
-    for (S32 x = min_chunk.chunk_x; x <= max_chunk.chunk_x; x++) {
-      WorldChunk*chunk = get_world_chunk(world, x, y);
-      if (chunk) {
+  for (S32 y = min_chunk_pos.chunk_pos.y; y <= max_chunk_pos.chunk_pos.y; y++) {
+    for (S32 x = min_chunk_pos.chunk_pos.x; x <= max_chunk_pos.chunk_pos.x; x++) {
+      WorldChunk*chunk_pos = get_world_chunk(world, V2_S32{x, y});
+      if (chunk_pos) {
           //assert(0);
-        while (chunk) {
-          EntityNode* node = chunk->node;
+        while (chunk_pos) {
+          EntityNode* node = chunk_pos->node;
           while (node && node->entity_index) {
 
             LowEntity* entity = game_state->low_entities + node->entity_index;
-            V2 entity_sim_space = subtract(sim_region->world, &entity->pos, &sim_region->center);
+            V2_F32 entity_sim_space = subtract(sim_region->world, &entity->pos, &sim_region->center);
 
             if (is_in_rectangle(sim_region->bounds, entity_sim_space))
               add_entity(game_state, sim_region, node->entity_index, entity, &entity_sim_space);
 
             node = node->next;
           }
-          chunk = chunk->next;
+          chunk_pos = chunk_pos->next;
         }
       }
 

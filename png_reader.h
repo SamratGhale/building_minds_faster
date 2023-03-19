@@ -6,12 +6,12 @@ struct png_header {
 };
 global_variable U8 PNGSignature[] = {137, 80, 78, 71, 13, 10, 26, 10};
 
-struct PNGChunkHeader{
+struct PNGchunk_posHeader{
   U32 Length;
   U32 TypeU32;
 };
 
-struct PNGChunkFooter {
+struct PNGchunk_posFooter {
   U32 crc;
 };
 
@@ -36,10 +36,10 @@ struct PNGIdatFooter {
 
 #pragma pack(pop)
 
-struct StreamingChunk{
+struct Streamingchunk_pos{
   U32   size;
   void* contents;
-  StreamingChunk *next;
+  Streamingchunk_pos *next;
 };
 
 struct StreamingBuffer {
@@ -51,8 +51,8 @@ struct StreamingBuffer {
     
   B32 under_flowed;
     
-  StreamingChunk *first;
-  StreamingChunk *last;
+  Streamingchunk_pos *first;
+  Streamingchunk_pos *last;
 };
 
 struct PNGHuffmanEntry{

@@ -35,6 +35,7 @@ typedef double F64;
 
 #define assert(expression)if(!(expression)){*(int*)0 =0;}
 
+
 function B32 strings_are_equal(char* a, char* b){
   B32 result = ( a == b);
   if(a && b){
