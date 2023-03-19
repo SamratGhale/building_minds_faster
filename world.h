@@ -25,7 +25,7 @@ struct World{
   U32 chunk_size_in_pixels;
   F32 chunk_size_in_meters;
   WorldChunk chunk_hash[128];
-  F32 meters_to_pixels;
+  S32 meters_to_pixels;
 };
 
 #define WORLD

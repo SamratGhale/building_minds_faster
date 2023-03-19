@@ -33,7 +33,7 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
   sim_region->bounds = bounds;
 
   //NOTE: good programming
-  sim_region->max_count = 128;
+  sim_region->max_count = 1024;
   sim_region->entity_count = 0;
 
   sim_region->entities = push_array(sim_arena, sim_region->max_count, SimEntity);
@@ -55,24 +55,24 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
   for (S32 y = min_chunk.chunk_y; y <= max_chunk.chunk_y; y++) {
     for (S32 x = min_chunk.chunk_x; x <= max_chunk.chunk_x; x++) {
       WorldChunk*chunk = get_world_chunk(world, x, y);
-      if (!chunk) {
-        assert(0);
-      }
+      if (chunk) {
+          //assert(0);
+        while (chunk) {
+          EntityNode* node = chunk->node;
+          while (node && node->entity_index) {
 
-      while (chunk) {
-        EntityNode* node = chunk->node;
-        while (node && node->entity_index) {
+            LowEntity* entity = game_state->low_entities + node->entity_index;
+            V2 entity_sim_space = subtract(sim_region->world, &entity->pos, &sim_region->center);
 
-          LowEntity* entity = game_state->low_entities + node->entity_index;
-          V2 entity_sim_space = subtract(sim_region->world, &entity->pos, &sim_region->center);
+            if (is_in_rectangle(sim_region->bounds, entity_sim_space))
+              add_entity(game_state, sim_region, node->entity_index, entity, &entity_sim_space);
 
-          if (is_in_rectangle(sim_region->bounds, entity_sim_space))
-            add_entity(game_state, sim_region, node->entity_index, entity, &entity_sim_space);
-
-          node = node->next;
+            node = node->next;
+          }
+          chunk = chunk->next;
         }
-        chunk = chunk->next;
       }
+
     }
   }
   return sim_region;

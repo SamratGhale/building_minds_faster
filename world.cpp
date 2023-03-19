@@ -128,6 +128,7 @@ function void initilize_world(World* world, S32 chunk_size_in_pixels, F32 chunk_
 
   world->chunk_size_in_pixels = chunk_size_in_pixels;
   world->chunk_size_in_meters = chunk_size_in_meters;
+
   world->meters_to_pixels = (F32)world->chunk_size_in_pixels / (F32)world->chunk_size_in_meters;
 
   for (U32 i = 0; i < array_count(world->chunk_hash); i += 1) {

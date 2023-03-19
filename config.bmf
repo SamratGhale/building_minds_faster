@@ -1,10 +1,6 @@
 add_walls_around_chunk {0,0,0,0}
-add_walls_around_chunk {2,0,0,0}
-add_temple {0,0,20,-5.4} 
-add_temple {2,0,20,-5.4} 
-
-add_walls_around_chunk {0,-2,0,0}
-add_walls_around_chunk {2,-2,0,0}
-add_temple {0,-2,0,-5.4} 
-add_temple {2,-2,20,-5.4} 
+add_walls_around_chunk {1,0,0,0}
+add_walls_around_chunk {0,-1,0,0}
+add_walls_around_chunk {-1,-1,0,0}
+add_walls_around_chunk {1,-1,0,0}
 end

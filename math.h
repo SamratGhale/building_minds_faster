@@ -31,6 +31,7 @@ inline V2 operator*(V2 b,F32 a){
   V2 result = a*b;
   return result;
 }
+
 inline V2 & operator*=(V2 &b, F32 a){
   b = a * b;
   return b;
@@ -43,7 +44,19 @@ inline V2 operator+(V2 a, V2 b){
   return result;
 }
 
+inline V2 operator+(V2 a, F32 b){
+  V2 result;
+  result.x = a.x + b;
+  result.y = a.y + b;
+  return result;
+}
+
 inline V2 & operator+=(V2 &a, V2 b){
+  a = a + b;
+  return a;
+}
+
+inline V2 & operator+=(V2 &a, F32 b){
   a = a + b;
   return a;
 }

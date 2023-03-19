@@ -28,25 +28,22 @@ enum EntityFlags{
 
 
 struct SimEntity{
-
   EntityType type;
   V2 pos; //This is in meters
-
   V2 dP; 
-  F32 width, height;
-  B32 collides;
 
   V4 color;
-  U32 storage_index;
+  
+  F32 width;
+  F32 height;
 
-  U32 flags;
   F32 jump_time;
+
+  B32 collides;
+  U32 storage_index;
+  U32 flags;
   S32 face_direction;
-
   ImageU32* texture;
-
-//  U32 texture_id;
-  //No showord stuff
 };
 
 struct SimRegion{

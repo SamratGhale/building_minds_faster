@@ -1,2 +1,26 @@
-add wall around the chunk on one commmand
-//add_wall_around_chunk{0,0}
+(World Building Platform)
+->implement zoom in and zoom out (scrolling and grabbing by mouse)
+
+->fill the world (this should also fix the crashing while roaming in the uninitilized world)
+
+(Rendering fonts)
+->Menu
+->debug infos(might not be necessary)
+
+(sound)
+->Implement Wav Sound parser and use in the game (casey's stream)
+->Create Sounds For games (in fl studio)
+
+(asset system)
+-> pack the sound and textures and fonts in asset system so we can ship it without leaking data
+
+(Game Play)
+->Starting, and ending animation
+->Player movements
+->Objects
+->Points and stuffs
+->Connections between the Chunks
+->Save and Load
+
+
+
