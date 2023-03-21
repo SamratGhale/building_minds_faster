@@ -4,7 +4,6 @@
 #include "sim_region.h"
 #include "parser.cpp"
 
-
 struct LowEntity{
   //NOTE: we need everything else while simulating
   WorldPosition pos;

@@ -190,8 +190,8 @@ function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos
 
   S32 mtop = game_state->world->meters_to_pixels ;
 
-  F32 height = ((F32)tex_wall.height / (F32)mtop);
-  F32 width  = ((F32)tex_wall.width  / (F32)mtop);
+  F32 height = 1;
+  F32 width  = 1;
   V4 color   = V4{1,1 ,1 ,1};
 
   for(F32 x = -8; x <= 8; x++){
@@ -199,7 +199,7 @@ function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos
       add_entity(game_state, chunk_pos, V2_F32{x, -4}, entity_type_wall, &tex_wall, color, V2_F32{height, width});
     }
     if(!(x == door_pos.x && door_pos.y == 4)){
-      add_entity(game_state, chunk_pos, V2_F32{x, 4}, entity_type_wall, &tex_wall, color, V2_F32{height, width});
+      add_entity(game_state, chunk_pos, V2_F32{x, 4}, entity_type_wall, &tex_wall, color, V2_F32{1, 1});
     }
   }
   for(F32 y = -4; y <= 4; y++){
@@ -239,21 +239,22 @@ function AddLowEntityResult add_temple(GameState* game_state, V2_S32 chunk_pos, 
 }
 
 function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, OffscreenBuffer* buffer, GameState* game_state) {
-  OutputDebugStringA("Apple banana");
 
   //First find out the min and max corner so that we can know which chunk_poss are required
   World* world = game_state->world;
 
   //TODO fix this
-  WorldPosition min_chunk_pos = map_into_world_position(game_state->world, camera_pos, get_min_corner(*cam_bounds));
-  WorldPosition max_chunk_pos = map_into_world_position(game_state->world, camera_pos, get_max_corner(*cam_bounds));
+  WorldPosition min_chunk = map_into_world_position(game_state->world, camera_pos, get_min_corner(*cam_bounds));
+  WorldPosition max_chunk = map_into_world_position(game_state->world, camera_pos, get_max_corner(*cam_bounds));
   //glUseProgram(opengl_config.basic_light_program);
 
-  for (S32 y = min_chunk_pos.chunk_pos.y; y <= max_chunk_pos.chunk_pos.y; y++) {
-    for (S32 x = min_chunk_pos.chunk_pos.x; x <= max_chunk_pos.chunk_pos.x; x++) {
-      WorldChunk* chunk_pos = get_world_chunk(world, V2_S32{x, y});
-      while (chunk_pos) {
-        EntityNode* node = chunk_pos->node;
+  for (S32 y = min_chunk.chunk_pos.y; y <= max_chunk.chunk_pos.y; y++) {
+    for (S32 x = min_chunk.chunk_pos.x; x <= max_chunk.chunk_pos.x; x++) {
+      WorldChunk* chunk= get_world_chunk(world, V2_S32{x, y});
+      while (chunk) {
+        EntityNode* node = chunk->node;
+        bubble_sort_entities(game_state, node);
+
         while (node) {
           LowEntity* low_entity = game_state->low_entities + node->entity_index;
           V2_F32 entity_cam_space = subtract(game_state->world, &low_entity->pos, camera_pos);
@@ -301,7 +302,7 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
           }
           node = node->next;
         }
-        chunk_pos = chunk_pos->next;
+        chunk= chunk->next;
       }
     }
   }
@@ -323,7 +324,7 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     game_state->world = push_struct(&game_state->world_arena, World);
 
     tex_wall = parse_png("../data/tex_wall_smool.png");
-    grass_png = parse_png("../data/torch.png");
+    grass_png = parse_png("../data/grass.png");
 
     assert(tex_wall.height == tex_wall.width);
 
@@ -354,6 +355,7 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)world->meters_to_pixels);
     dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)world->meters_to_pixels);
     game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
+
 
     Config * tokens = &game_state->tokens;
     *tokens = {};
@@ -540,6 +542,7 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
       game_state->chunk_animation.completed = 0;
     }
   }
+
   if(game_state->chunk_animation.is_active){
     ChunkAnimation* anim = &game_state->chunk_animation;
     if(anim->completed >= 100){
@@ -568,14 +571,30 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
         if (entity->type == entity_type_player) {
           MoveSpec spec = default_move_spec();
           spec.unit_max_accel_vector = 1;
-          spec.speed = 28.61f;
-          spec.drag = 4.0f;
+          spec.speed = 18.61f;
+          spec.drag = 8.0f;
           move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
         }
       }
     }
   }
+
   end_sim(sim_region, game_state);
   opengl_bitmap(&background_png,game_state->camera_p.offset.x, game_state->camera_p.offset.y,   background_png.width, background_png.height);
+
   render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

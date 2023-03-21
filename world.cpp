@@ -198,3 +198,44 @@ function void update_camera(GameState* game_state){
   }
   //game_state->camera_p.chunk_pos.y = player->pos.chunk_pos.y;
 }
+
+
+//This is for linked list
+function void bubble_sort_entities(GameState* game_state, EntityNode* head){
+  World* world = game_state->world;
+  EntityNode* curr = head, *index = NULL;
+  S32 temp;
+
+  if(head == NULL){
+    return;
+  }
+
+  while(curr != NULL){
+
+    index = curr->next;
+    while(index != NULL){
+
+      LowEntity* curr_entity = &game_state->low_entities[curr->entity_index];
+      LowEntity* index_entity = &game_state->low_entities[index->entity_index];
+
+      if(!(curr_entity->sim.type == entity_type_null || index_entity->sim.type == entity_type_null)){
+        if(curr_entity->pos.offset.y <= index_entity->pos.offset.y){
+          temp = curr->entity_index;
+          curr->entity_index = index->entity_index;
+          index->entity_index = temp;
+        }
+      }
+      index = index->next;
+    }
+    curr = curr->next;
+  }
+}
+
+
+
+
+
+
+
+
+
