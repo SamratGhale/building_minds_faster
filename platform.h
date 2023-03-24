@@ -11,6 +11,8 @@
 
 #include "math.h"
 
+#define BITMAP_BYTES_PER_PIXEL 4
+
 struct OffscreenBuffer{
   BITMAPINFO info;
   void* memory;
@@ -33,7 +35,7 @@ struct ControllerInput{
   F32 stick_x;
   F32 stick_y;
   union {
-    ButtonState buttons[12];
+    ButtonState buttons[13];
     struct {
       ButtonState move_up;
       ButtonState move_down;
@@ -47,6 +49,7 @@ struct ControllerInput{
       ButtonState right_shoulder;
       ButtonState back;
       ButtonState start;
+      ButtonState Key_l; //TODO: put this only on debug build?
     };
   };
 };
@@ -65,17 +68,41 @@ struct MemoryArena{
   S64 used;
 };
 
+inline S64 get_alignment_offset(MemoryArena* arena, S64 alignment){
+  S64 align_offset = 0;
+  S64 result_ptr = (S64)arena->base + arena->used;
+
+  S64 align_mask = alignment - 1;
+  if(result_ptr & align_mask){
+    align_offset = alignment - (result_ptr & align_mask);
+  }
+  return align_offset;
+}
+
 inline void initilize_arena(MemoryArena* arena, S64 size, void* base){
   arena->size = size;
   arena->base = (U8*)base;
   arena->used = 0;
 }
 
-#define push_struct(arena, type)(type*)push_size_(arena, sizeof(type))
-#define push_array(arena, count, type)(type*)push_size_(arena, (count)* sizeof(type))
-inline void* push_size_(MemoryArena* arena, S64 size){
-  void* ret  = arena->base + arena->used;
+#define push_struct(arena, type, ...)(type*)push_size_(arena, sizeof(type), ## __VA_ARGS__)
+#define push_array(arena, count, type, ...)(type*)push_size_(arena, (count)* sizeof(type), ## __VA_ARGS__)
+
+#define push_size(arena, size, ...)push_size_(arena, size, ## __VA_ARGS__)
+
+
+inline void* push_size_(MemoryArena* arena, S64 size_init, S64 alignment = 4){
+  S64 size = size_init;
+
+  S64 align_offset = get_alignment_offset(arena, alignment);
+  size += align_offset;
+  assert((arena->used + size) <= arena->size);
+
+
+  void* ret  = arena->base + arena->used + align_offset;
   arena->used += size;
+  assert(size >= size_init);
+  
   return ret;
 }
 
@@ -90,6 +117,21 @@ struct PlatformState{
 struct ReadFileResult{
   U32 content_size;
   void* contents;
+};
+
+struct LoadedBitmap{
+  U32 width;
+  U32 height;
+  U32 *pixels;
+  U32 pitch;
+  V2_F32  align_percent;
+  F32 width_over_height;
+
+  //For texture stuffs
+  U32 tex_handle;
+  U32 vbo;
+  U32 vao;
+  U32 ebo;
 };
 
 function ReadFileResult read_entire_file(char* file_name);

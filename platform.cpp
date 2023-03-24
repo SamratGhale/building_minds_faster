@@ -239,6 +239,8 @@ function void process_pending_messages(ControllerInput* keyboard_controller) {
             process_keyboard_message(&keyboard_controller->start, is_down);
           } else if (vk_code == VK_BACK) {
             process_keyboard_message(&keyboard_controller->back, is_down);
+          }else if(vk_code == 'L'){
+            process_keyboard_message(&keyboard_controller->Key_l, is_down);
           }
           if (is_down) {
             B32 alt_key_was_down = ((message.lParam & (1 << 29)) != 0);

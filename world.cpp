@@ -138,7 +138,6 @@ inline WorldPosition map_into_chunk_pos_space(World* world, WorldPosition base_p
 }
 
 inline void adjust_world_positon(World* world, S32* chunk_pos, F32 * offset, F32 chunk_size_in_meters) {
-
   S32 extra_offset = (S32)roundf(*offset / chunk_size_in_meters);
   *chunk_pos += extra_offset;
   *offset -= extra_offset * chunk_size_in_meters;
@@ -171,32 +170,26 @@ function WorldPosition create_world_pos(V2_S32 chunk_pos, F32 off_x, F32 off_y) 
   return result;
 }
 
-function void update_camera(GameState* game_state){
-  //Update when the player is certain % at right or left
+function void update_camera(GameState* game_state, V2_F32* camera_ddp){
+	if(!game_state->chunk_animation.is_active){
+		LowEntity* player = game_state->low_entities + game_state->player_index;
+		WorldPosition* camera = &game_state->camera_p;
+		V2_F32 entity_cam_space = subtract(game_state->world, &player->pos, &game_state->camera_p);
+		World* world = game_state->world;
 
-  LowEntity* player = game_state->low_entities + game_state->player_index;
-  WorldPosition* camera = &game_state->camera_p;
-  V2_F32 entity_cam_space = subtract(game_state->world, &player->pos, &game_state->camera_p);
-  World* world = game_state->world;
-
-  print_V2_F32(entity_cam_space);
-  if(entity_cam_space.x > 10.0f){
-    game_state->camera_p.offset.x += .2f;
-    adjust_world_positon(world, &camera->chunk_pos.x, &camera->offset.x, world->chunk_size_in_meters.x);
-  }
-  else if( entity_cam_space.x < -10.0f ){
-    game_state->camera_p.offset.x -= .2f;
-    adjust_world_positon(world, &camera->chunk_pos.x, &camera->offset.x, world->chunk_size_in_meters.x);
-  }
-  if(entity_cam_space.y > 5.0f){
-    game_state->camera_p.offset.y += .2f;
-    adjust_world_positon(world, &camera->chunk_pos.y, &camera->offset.y,world->chunk_size_in_meters.y);
-  }
-  else if( entity_cam_space.y < -5.0f ){
-    game_state->camera_p.offset.y -= .2f;
-    adjust_world_positon(world, &camera->chunk_pos.y, &camera->offset.y,world->chunk_size_in_meters.y);
-  }
-  //game_state->camera_p.chunk_pos.y = player->pos.chunk_pos.y;
+		if(entity_cam_space.x > 5.0f){
+			camera_ddp->x = 1.0f;
+		}
+		else if(entity_cam_space.x < -5.0f ){
+			camera_ddp->x = -1.0f;
+		}
+		if(entity_cam_space.y > 2.0f){
+			camera_ddp->y = 1;
+		}
+		else if( entity_cam_space.y < -2.0f ){
+			camera_ddp->y = -1;
+		}
+	}
 }
 
 

@@ -33,6 +33,20 @@ struct ChunkAnimation{
   S32 completed; //In %
 };
 
+enum Asset_Enum{
+  asset_background,
+  asset_temple,
+  asset_player_right,
+  asset_player_left,
+  asset_wall,
+  asset_grass,
+	asset_count
+};
+
+struct Asset{
+  LoadedBitmap bitmaps[asset_count];
+};
+
 struct GameState{
   MemoryArena world_arena;
   World* world;
@@ -45,6 +59,9 @@ struct GameState{
   S32 player_index;
   Config tokens;
   ChunkAnimation chunk_animation;
+
+  LoadedBitmap test_font;
+	Asset asset;
 };
 
 #define GAME_H

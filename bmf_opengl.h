@@ -20,6 +20,8 @@ struct OpenglConfig{
   GLuint texture_sampler_id;
   GLuint transform_id;
   GLuint light_pos_id;
+  GLuint use_light;
+  S32 use_light_local;
 };
 
 

@@ -123,7 +123,7 @@ function OpenglInfo opengl_init(B32 modern_context){
 }
 
 //All of the int arguements is in pixels
-inline void opengl_bitmap(ImageU32 *image, F32 min_x, F32 min_y, S32 width, S32 height){
+inline void opengl_bitmap(LoadedBitmap *image, F32 min_x, F32 min_y, S32 width, S32 height){
   F32 max_x  = min_x + width;
   F32 max_y  = min_y + height;
 

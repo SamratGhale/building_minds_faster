@@ -68,6 +68,11 @@ inline V2_F32 & operator+=(V2_F32 &a, F32 b){
   return a;
 }
 
+inline bool operator==(V2_F32 a, V2_F32 b){
+	bool result = (a.x == b.x && a.y == b.y);
+	return result;
+}
+
 inline V2_F32 operator-(V2_F32 a, V2_F32 b){
   V2_F32 result;
   result.x = a.x - b.x;
@@ -163,7 +168,7 @@ inline Rec2 rect_center_full_dim(V2_F32 center, V2_F32 full_dim){
 //test is relative to a WorldPosition
 inline B32 is_in_rectangle(Rec2 rect, V2_F32 test){
   B32 result = ((test.x <  rect.max.x && test.y < rect.max.y)
-	    && ( test.x >= rect.min.x && test.y >= rect.min.y));
+								&& ( test.x >= rect.min.x && test.y >= rect.min.y));
   return result;
 }
 #define GRID_MATH_H

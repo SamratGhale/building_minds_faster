@@ -3,19 +3,13 @@
 #include "png_reader.cpp"
 #include "sim_region.cpp"
 #include "game.h"
+#include "assets.cpp"
 
 function U32 denormalize_color(F32 R, F32 G, F32 B) {
   U32 Color = ((U8)roundf(R * 255.0f) << 16) | ((U8)roundf(G * 255.0f) << 8) | ((U8)roundf(B * 255.0f) << 0);
   return Color;
 }
 
-//TODO: associate PNG(pixel) data to entities, every data should be connected to a entity
-global_variable ImageU32 background_png;
-global_variable ImageU32 temple_png;
-global_variable ImageU32 player_right_png;
-global_variable ImageU32 player_left_png;
-global_variable ImageU32 tex_wall;
-global_variable ImageU32 grass_png;
 
 struct MoveSpec{
   B32 unit_max_accel_vector;
@@ -98,8 +92,10 @@ function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, Mov
           if (test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min, min_corner.x, max_corner.x)) {
             wall_normal = V2_F32{ 0, -1 };
             hit_entity_index = i;
-          //add_flag(entity, entity_on_ground);
-          //clear_flag(entity, entity_flag_falling);
+#if JUMPING_ENABLED
+						add_flag(entity, entity_on_ground);
+						clear_flag(entity, entity_flag_falling);
+#endif
           }
         }
       }
@@ -123,7 +119,7 @@ function void move_entity(SimRegion * sim_region, SimEntity* entity, F32 dt, Mov
   }
   else if(ABS(entity->dP.x) > ABS(entity->dP.y)) {
     if(entity->dP.x > 0) {
-      entity->face_direction = 0;//right 
+      entity->face_direction = 0;//right
     }
     else {
       entity->face_direction = 2;//left
@@ -167,7 +163,7 @@ function AddLowEntityResult add_low_entity(GameState* game_state, EntityType typ
   return result;
 }
 
-function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, V2_F32 offset, EntityType type, ImageU32* image, V4 color, V2_F32 size, B32 collides = true){
+function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, V2_F32 offset, EntityType type, LoadedBitmap* image, V4 color, V2_F32 size, B32 collides = true){
 
   S32 mtop = game_state->world->meters_to_pixels;
 
@@ -186,7 +182,7 @@ function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, 
 
 }
 
-function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos, V2_F32 door_pos){
+function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos){
 
   S32 mtop = game_state->world->meters_to_pixels ;
 
@@ -194,32 +190,28 @@ function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos
   F32 width  = 1;
   V4 color   = V4{1,1 ,1 ,1};
 
-  for(F32 x = -8; x <= 8; x++){
-    if(!(x == door_pos.x && door_pos.y == -4)){
-      add_entity(game_state, chunk_pos, V2_F32{x, -4}, entity_type_wall, &tex_wall, color, V2_F32{height, width});
-    }
-    if(!(x == door_pos.x && door_pos.y == 4)){
-      add_entity(game_state, chunk_pos, V2_F32{x, 4}, entity_type_wall, &tex_wall, color, V2_F32{1, 1});
-    }
+
+	LoadedBitmap* tex_wall = get_asset(&game_state->asset, asset_wall);
+	LoadedBitmap* tex_grass = get_asset(&game_state->asset, asset_grass);
+
+	for(F32 x = -8; x <= 8; x++){
+		add_entity(game_state, chunk_pos, V2_F32{x, -4}, entity_type_wall, tex_wall, color, V2_F32{height, width}, false);
+		add_entity(game_state, chunk_pos, V2_F32{x, 4}, entity_type_wall, tex_wall, color, V2_F32{1, 1}, false);
   }
   for(F32 y = -4; y <= 4; y++){
-    if(!(y == door_pos.y && door_pos.x == -8)){
-      add_entity(game_state, chunk_pos, V2_F32{-8, y}, entity_type_wall, &tex_wall, color, V2_F32{height, width});
-    }
-    if(!(y == door_pos.y && door_pos.x == 8)){
-      add_entity(game_state, chunk_pos, V2_F32{8, y}, entity_type_wall, &tex_wall, color, V2_F32{height, width});
-    }
+		add_entity(game_state, chunk_pos, V2_F32{-8, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, false);
+		add_entity(game_state, chunk_pos, V2_F32{8, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, false);
   }
   for(F32 x = -7; x <= 7; x++){
     for(F32 y = -3; y <= 3; y++){
-      add_entity(game_state, chunk_pos, V2_F32{x, y}, entity_type_grass, &grass_png, color, V2_F32{height, width}, false);
+      add_entity(game_state, chunk_pos, V2_F32{x, y}, entity_type_grass, tex_grass, color, V2_F32{height, width}, false);
     }
   }
 }
 
 //Just a thing
 //Height and width will be image height and width
-function AddLowEntityResult add_temple(GameState* game_state, V2_S32 chunk_pos, V2_F32 pos, ImageU32 * image){
+function AddLowEntityResult add_temple(GameState* game_state, V2_S32 chunk_pos, V2_F32 pos, LoadedBitmap * image){
 
   S32 mtop = game_state->world->meters_to_pixels;
 
@@ -282,21 +274,27 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
                 V2_F32 max_p = V2_F32{max_x, max_y};
                 V2_F32 min_p = V2_F32{min_x, min_y};
 
-                if(entity->type == entity_type_player){
+                LoadedBitmap* player_left  = get_asset(&game_state->asset,asset_player_left);
+								LoadedBitmap* player_right = get_asset(&game_state->asset,asset_player_right);
+
+								if(entity->type == entity_type_player){
                   if(entity->face_direction == 0){
-                    opengl_bitmap( &player_left_png,min_x, min_y, width_pixels, height_pixels);
+                    opengl_bitmap(player_left,min_x, min_y, width_pixels, height_pixels);
                   }else{
-                    opengl_bitmap(&player_right_png, min_x, min_y,  width_pixels, height_pixels);
+                    opengl_bitmap(player_right, min_x, min_y,  width_pixels, height_pixels);
                   }
 
-                }else{
+									glUseProgram(opengl_config.basic_light_program);
+									glUniform2f(opengl_config.light_pos_id, min_x, min_y);
+									glUseProgram(0);
+								}else{
                   opengl_bitmap(entity->texture, min_x, min_y,  width_pixels, height_pixels);
                 }
               }break;
               case entity_type_npc: {
               }break;
               case entity_type_null: {
-              //Do nothing
+								//Do nothing
               }break;
             }
           }
@@ -311,6 +309,72 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
 #define ended_down(b, C)((C->b.ended_down)? 1 :0)
 #define was_down(b, C)((!C->b.ended_down && C->b.half_transition_count)?1:0)
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+
+
+function LoadedBitmap
+make_empty_bitmap(MemoryArena *arena, S32 width, S32 height, B32 clear_to_zero = true)
+{
+	LoadedBitmap result = {};
+
+	result.align_percent = V2_F32{0.5f, 0.5f};
+
+	if(width != 0 && height != 0){
+		result.width_over_height = (F32)width / (F32)height;
+	}else{
+		result.width_over_height = 0;
+	}
+
+	result.width = width;
+	result.height = height;
+	result.pitch = result.width * BITMAP_BYTES_PER_PIXEL;
+	S32 total_bitmap_size = width *height * BITMAP_BYTES_PER_PIXEL;
+	result.pixels = (U32*)push_size(arena, total_bitmap_size, 16);
+	return(result);
+}
+
+void toggle_light(){
+ glUseProgram(opengl_config.basic_light_program); 
+ glUniform1i(opengl_config.use_light, opengl_config.use_light_local);
+
+ if(opengl_config.use_light_local == 1){
+  opengl_config.use_light_local = 0;
+ }else{
+  opengl_config.use_light_local = 1;
+ }
+ glUseProgram(0);
+}
+
+
+function LoadedBitmap test_nothings(MemoryArena * arena){
+
+  ReadFileResult ttf_file = read_entire_file("c:/Windows/Fonts/SourceCodePro-Bold.ttf");
+
+  stbtt_fontinfo font ={};
+  stbtt_InitFont(&font, (U8*)ttf_file.contents, stbtt_GetFontOffsetForIndex((U8*)ttf_file.contents,0));
+
+  S32 width, height, x_offset, y_offset;
+
+  U8* mono_bitmap = stbtt_GetCodepointBitmap(&font, 0,stbtt_ScaleForPixelHeight(&font, 50.0f), 'A', &width, &height, &x_offset, &y_offset);
+
+  LoadedBitmap result = make_empty_bitmap(arena, width, height, false);
+
+  U8* source = mono_bitmap;
+  U8* dest_row = (U8*)result.pixels + (height - 1) * result.pitch;
+
+  for(U32 y = 0; y < height; ++y){
+    U32* dest = (U32*)dest_row;
+    for(U32 x = 0; x < width; ++x){
+      U8 alpha = *source++;
+      *dest++ = ((alpha << 24) | (alpha << 16) | (alpha << 8) | (alpha << 0) );
+    }
+    dest_row -= result.pitch;
+  }
+  stbtt_FreeBitmap(mono_bitmap, 0);
+  return result;
+}
+
 function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state, GameInput* input) {
 
   GameState* game_state = (GameState*)platform_state->permanent_storage;
@@ -323,19 +387,17 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
     game_state->world = push_struct(&game_state->world_arena, World);
 
-    tex_wall = parse_png("../data/tex_wall_smool.png");
-    grass_png = parse_png("../data/grass.png");
+    game_state->test_font = test_nothings(&game_state->world_arena);
 
-    assert(tex_wall.height == tex_wall.width);
+    LoadedBitmap* tex_wall = get_asset(&game_state->asset, asset_wall);
+		LoadedBitmap* grass_png = get_asset(&game_state->asset, asset_grass);
+
+    assert(tex_wall->height == tex_wall->width);
 
     initilize_world(game_state->world, buffer->width, buffer->height);
     World *world = game_state->world;
 
     game_state->camera_p = create_world_pos(V2_S32{0, 0}, 0, 0);
-    background_png = parse_png("../data/green_background.png");
-    temple_png = parse_png("../data/temple.png");
-    player_right_png = parse_png("../data/character_smoll.png");
-    player_left_png = parse_png("../data/character_smoll_left.png");
 
     //TODO: put low_entitites in the world instead of game_state
     for (U32 i = 0; i < array_count(game_state->low_entities); i++) {
@@ -356,7 +418,6 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)world->meters_to_pixels);
     game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
 
-
     Config * tokens = &game_state->tokens;
     *tokens = {};
     tokens->last_write_time = new_config_time;
@@ -368,10 +429,8 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
         case(command_add_wall): {
           V2_S32 chunk_pos  = {};
-          F32 rel_x = 0.0f;
-          F32 rel_y = 0.0f;
-          S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_pos.x, &chunk_pos.y, &rel_x, &rel_y);
-          if (assigned == 4) {
+          S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
+          if (assigned == 2) {
             //add_wall(game_state, chunk_pos, V2_F32{ rel_x, rel_y });
           } else {
             assert(0);
@@ -380,11 +439,9 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
         case(command_add_walls_around_chunk_pos): {
           V2_S32 chunk_pos = {};
-          F32 rel_x = 0.0f;
-          F32 rel_y = 0.0f;
-          S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_pos.x, &chunk_pos.y, &rel_x, &rel_y);
-          if (assigned == 4) {
-            add_walls_around_chunk_pos(game_state, chunk_pos, V2_F32{ rel_x, rel_y });
+          S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
+          if (assigned == 2) {
+            add_walls_around_chunk_pos(game_state, chunk_pos);
           } else {
             assert(0);
           }
@@ -395,8 +452,9 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
           F32 rel_x = 0.0f;
           F32 rel_y = 0.0f;
           S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_pos.x, &chunk_pos.y, &rel_x, &rel_y);
-          if (assigned == 4) {
-            add_temple(game_state, chunk_pos, V2_F32{ rel_x, rel_y },&temple_png);
+          LoadedBitmap* temple =  get_asset(&game_state->asset, asset_temple);
+					if (assigned == 4) {
+            add_temple(game_state, chunk_pos, V2_F32{ rel_x, rel_y },temple);
           } else {
             assert(0);
           }
@@ -405,15 +463,17 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     }
 
     V4 color = {0,1,1,0};
-    GLuint obj_color = glGetUniformLocation(opengl_config.basic_light_program, "obj_color"); 
+    GLuint obj_color = glGetUniformLocation(opengl_config.basic_light_program, "obj_color");
     GLuint sampler = glGetUniformLocation(opengl_config.basic_light_program, "sampler");
     GLuint mat = glGetUniformLocation(opengl_config.basic_light_program, "mat");
-    glUniform4f(obj_color, color.r, color.g, color.b, color.a);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     opengl_config.light_pos_id = glGetUniformLocation(opengl_config.basic_light_program, "light_pos");
+    opengl_config.use_light = glGetUniformLocation(opengl_config.basic_light_program, "use_light");
+
+
 
     //Bind stuffs
     F32 a = 2.0f/(F32)buffer->width;
@@ -430,7 +490,6 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     F32 center_y = (world->chunk_size_in_meters.y * mtop) * 0.5f;
     glUseProgram(opengl_config.basic_light_program);
     glUniformMatrix4fv(opengl_config.transform_id, 1, GL_FALSE, &proj[0]);
-    glUniform2f(opengl_config.light_pos_id, center_x, center_y);
     glUseProgram(0);
   }
 
@@ -444,37 +503,40 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
     if (was_down(action_left, controller))  camera_ddp.x = -1;
     if (was_down(action_right, controller)) camera_ddp.x = 1;
+
     if (was_down(action_down, controller)) {
       camera_ddp.y = -1;
 
-        //TODO: implement mouse here
-        #if 0
-        world->meters_to_pixels -= 3;
-        S32 mtop = world->meters_to_pixels;
-        V2_F32 dim_in_meters = {};
-        dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)mtop);
-        dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)mtop);
-        //game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
-        #endif
+			//TODO: implement mouse here
+#if 0
+			world->meters_to_pixels -= 3;
+			S32 mtop = world->meters_to_pixels;
+			V2_F32 dim_in_meters = {};
+			dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)mtop);
+			dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)mtop);
+			//game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
+#endif
 
-    } 
+    }
     if (was_down(action_up, controller)) {
       camera_ddp.y = 1;
-        #if 0
-        world->meters_to_pixels += 3;
-        V2_F32 dim_in_meters = {};
-        dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)world->meters_to_pixels);
-        dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)world->meters_to_pixels);
-        //game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
-        #endif
-    } 
+#if 0
+			world->meters_to_pixels += 3;
+			V2_F32 dim_in_meters = {};
+			dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)world->meters_to_pixels);
+			dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)world->meters_to_pixels);
+			//game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
+#endif
+    }
+		update_camera(game_state, &camera_ddp);
+
 
     if (controlled_entity_index == 0) {
       if (controller->start.ended_down) {
         WorldPosition new_player_pos = {};
         new_player_pos.offset = V2_F32{ 0.0f, 0.0f };
-        //AddLowEntityResult res = add_entity(game_state, new_player_pos);
-        AddLowEntityResult res = add_entity(game_state, new_player_pos.chunk_pos, new_player_pos.offset, entity_type_player, &player_left_png, V4{1,1,1,1}, V2_F32{1.0f,1.0f});
+        LoadedBitmap* player_left = get_asset(&game_state->asset, asset_player_left);
+				AddLowEntityResult res = add_entity(game_state, new_player_pos.chunk_pos, new_player_pos.offset, entity_type_player, player_left , V4{1,1,1,1}, V2_F32{1.0f,1.0f});
         game_state->controlled_entity_index[i] = res.index;
         game_state->player_index = res.index;
       }
@@ -492,6 +554,9 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
           if (ended_down(move_down, controller))  player_ddp.y = -1.0f;
           if (ended_down(move_right, controller))  player_ddp.x = 1.0f;
           if (ended_down(move_left, controller))  player_ddp.x = -1.0f;
+          if (was_down(Key_l, controller)) {
+            toggle_light();
+          }
         }
 
 #if JUMPING_ENABLED
@@ -534,13 +599,12 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
   //Smooth chunk_pos start
   if(camera_ddp.x != 0 || camera_ddp.y != 0){
     if(!game_state->chunk_animation.is_active){
-      game_state->chunk_animation.is_active = 1;
+      game_state->chunk_animation.is_active = true;
       game_state->chunk_animation.source = game_state->camera_p;
       game_state->chunk_animation.dest   = game_state->camera_p;
-      game_state->chunk_animation.dest.chunk_pos.x += camera_ddp.x;
-      game_state->chunk_animation.dest.chunk_pos.y += camera_ddp.y;
       game_state->chunk_animation.completed = 0;
-    }
+			game_state->chunk_animation.dest = map_into_world_position(world, &game_state->chunk_animation.dest, camera_ddp);
+		}
   }
 
   if(game_state->chunk_animation.is_active){
@@ -550,8 +614,8 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     }else{
       V2_F32 chunk_diff = subtract(game_state->world, &anim->dest, &anim->source);
       //chunk_pos_diff = chunk_pos_diff * game_state->world->meters_to_pixels;
-      F32 add_x = chunk_diff.x / 20.0f; 
-      F32 add_y = chunk_diff.y / 20.0f; 
+      F32 add_x = chunk_diff.x / 20.0f;
+      F32 add_y = chunk_diff.y / 20.0f;
 
       game_state->camera_p = map_into_world_position(game_state->world, &game_state->camera_p, V2_F32{add_x, add_y});
       anim->completed += 5;
@@ -580,21 +644,8 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
   }
 
   end_sim(sim_region, game_state);
-  opengl_bitmap(&background_png,game_state->camera_p.offset.x, game_state->camera_p.offset.y,   background_png.width, background_png.height);
-
+	LoadedBitmap* background_png = get_asset(&game_state->asset, asset_background);
+	opengl_bitmap(background_png, game_state->camera_p.offset.x, game_state->camera_p.offset.y, background_png->width, background_png->height);
   render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);
+  opengl_bitmap(&game_state->test_font, 200, 200, game_state->test_font.width, game_state->test_font.height);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

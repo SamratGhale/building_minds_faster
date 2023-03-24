@@ -1,3 +1,8 @@
+(Currently working on)
+Tile
+player movement use all the movement to create animation effect while moving
+
+
 (World Building Platform)
 ->implement zoom in and zoom out (scrolling and grabbing by mouse)
 
@@ -21,6 +26,3 @@
 ->Points and stuffs
 ->Connections between the chunk_poss
 ->Save and Load
-
-
-

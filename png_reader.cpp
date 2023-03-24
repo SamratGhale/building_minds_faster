@@ -314,7 +314,7 @@ function void png_filter_reconstruct(U32 Width, U32 Height, U8 *DecompressedPixe
   }
 }
 
-function ImageU32 parse_png(const char* file_name) {
+function LoadedBitmap parse_png(const char* file_name) {
   // what we expect, and is happy to crash otherwise.
   ReadFileResult file_result = read_entire_file((char*)file_name);
   StreamingBuffer file = {};
@@ -546,7 +546,7 @@ function ImageU32 parse_png(const char* file_name) {
       }
     }
   }
-  ImageU32 result = {};
+  LoadedBitmap result = {};
   result.width = width;
   result.height = height;
   result.pixels = (U32 *)final_pixels;

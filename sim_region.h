@@ -10,15 +10,6 @@ enum EntityType{
   entity_type_fire_torch
 };
 
-struct ImageU32{
-  U32 width;
-  U32 height;
-  U32 *pixels;
-  U32 tex_handle;
-  U32 vbo;
-  U32 vao;
-  U32 ebo;
-};
 enum EntityFlags{
   //This are all used for the player only
   entity_flag_jumping = (1 << 1),
@@ -45,7 +36,7 @@ struct SimEntity{
   U32 flags;
   
   S32 face_direction;
-  ImageU32* texture;
+  LoadedBitmap* texture;
 };
 
 struct SimRegion{
