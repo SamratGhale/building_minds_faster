@@ -1,5 +1,13 @@
 #ifndef BMF_OPENGL
 
+//To be attached to the entity structs
+struct OpenglContext{
+  U32 tex_handle; //This will be uninitilized for tile
+  U32 vbo;
+  U32 vao;
+  U32 ebo;
+};
+
 struct OpenglInfo{
   B32 modern_context;
 
@@ -21,8 +29,11 @@ struct OpenglConfig{
   GLuint transform_id;
   GLuint light_pos_id;
   GLuint use_light;
-  S32 use_light_local;
+  bool use_light_local;
+
+  GLuint tile_uniform;
 };
+
 
 
 #define BMF_OPENGL

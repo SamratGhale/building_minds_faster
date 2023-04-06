@@ -99,9 +99,9 @@ inline U64 get_file_time(char* file_name){
 
 inline B32 is_file_changed(S64 arg1, S64 arg2){
   if(CompareFileTime((FILETIME*)&arg1, (FILETIME*)&arg2) != 0){
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 //File read and write functions
@@ -239,8 +239,15 @@ function void process_pending_messages(ControllerInput* keyboard_controller) {
             process_keyboard_message(&keyboard_controller->start, is_down);
           } else if (vk_code == VK_BACK) {
             process_keyboard_message(&keyboard_controller->back, is_down);
-          }else if(vk_code == 'L'){
+          }
+          else if(vk_code == 'L'){
             process_keyboard_message(&keyboard_controller->Key_l, is_down);
+          }
+          else if(vk_code == 'T'){
+            process_keyboard_message(&keyboard_controller->Key_t, is_down);
+          }
+          else if(vk_code == 'U'){
+            process_keyboard_message(&keyboard_controller->Key_u, is_down);
           }
           if (is_down) {
             B32 alt_key_was_down = ((message.lParam & (1 << 29)) != 0);
@@ -405,7 +412,7 @@ function void win32_init_opengl(HWND window){
   //Allocation of memory for the arena
 
     PlatformState platform_state = {};
-    platform_state.permanent_storage_size = Megabytes(256);
+    platform_state.permanent_storage_size = Gigabytes(1);
     platform_state.temporary_storage_size = Gigabytes(1);
     platform_state.total_size = platform_state.permanent_storage_size + platform_state.temporary_storage_size;
     platform_state.permanent_storage = VirtualAlloc(0, (size_t)platform_state.total_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);

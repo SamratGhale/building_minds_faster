@@ -10,6 +10,7 @@
 #pragma comment(lib, "opengl32.lib")
 
 #include "math.h"
+#include "bmf_opengl.h"
 
 #define BITMAP_BYTES_PER_PIXEL 4
 
@@ -35,7 +36,6 @@ struct ControllerInput{
   F32 stick_x;
   F32 stick_y;
   union {
-    ButtonState buttons[13];
     struct {
       ButtonState move_up;
       ButtonState move_down;
@@ -49,8 +49,11 @@ struct ControllerInput{
       ButtonState right_shoulder;
       ButtonState back;
       ButtonState start;
+      ButtonState Key_u;
       ButtonState Key_l; //TODO: put this only on debug build?
+      ButtonState Key_t; //TODO: put this only on debug build?
     };
+    ButtonState buttons[15];
   };
 };
 
@@ -119,20 +122,34 @@ struct ReadFileResult{
   void* contents;
 };
 
+
+#pragma pack(push, 1) //Using pragma pack(push, 1) so that we can cast directly from the file
+struct BitmapHeader{ //This is used only when reading the files
+  float width;
+  float height;
+  uint32_t pitch;
+  U64 total_size;
+};
 struct LoadedBitmap{
-  U32 width;
-  U32 height;
-  U32 *pixels;
+  float width;
+  float height;
   U32 pitch;
+  U64 total_size;
+  U32 *pixels;
   V2_F32  align_percent;
   F32 width_over_height;
 
   //For texture stuffs
-  U32 tex_handle;
-  U32 vbo;
-  U32 vao;
-  U32 ebo;
+  OpenglContext gl_context;
 };
+
+#pragma pack(pop)
+
+struct BitmapArray{ //used for collective rendering of bitmap
+  U32 count;
+  LoadedBitmap bitmaps[100];
+};
+
 
 function ReadFileResult read_entire_file(char* file_name);
 inline U64 get_file_time(char* file_name);

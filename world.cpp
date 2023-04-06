@@ -2,6 +2,79 @@
 #include "game.h"
 #include <stdio.h>
 
+function void append_tile(SimEntity* entity, Tile* new_tile, MemoryArena* arena){
+
+  add_flag(new_tile, tile_path);
+  if(entity->tile_path == NULL){
+    entity->tile_path = push_struct(arena, TileNode); 
+    entity->tile_path->tile = new_tile;
+    entity->tile_path->next = NULL;
+  }
+  else{
+    TileNode* curr = entity->tile_path;
+    while(curr->next){
+      curr = curr->next;
+    }
+    curr->next = push_struct(arena, TileNode);
+    curr->next->tile = new_tile;
+    curr->next->next = NULL;
+  }
+}
+
+inline Tile* get_last_tile(TileNode* head){
+  TileNode* curr = head; 
+  while(curr->next){
+    curr = curr->next;
+  }
+  return curr->tile;
+}
+
+inline void remove_last_tile(TileNode* head){
+  TileNode* curr = head; 
+  if(head->next != NULL){
+
+    if(head->next->next == NULL){
+      clear_flag(head->next->tile, tile_path);
+      head->next = NULL;
+    }else{
+      while(curr->next->next){
+        curr = curr->next;
+      }
+      clear_flag(curr->next->tile, tile_path);
+      curr->next = NULL;
+    }
+  }
+}
+
+inline S32 get_path_length(TileNode* head){
+  S32 count = 1;
+  TileNode* curr = head; 
+  if(head->next == NULL){
+    return 1;
+  }else{
+    while(curr->next){
+      count++;
+      curr = curr->next;
+    }
+  }
+  return count;
+}
+
+inline Tile* get_index_path(TileNode* head, S32 index){
+  if(get_path_length(head) < index){
+    return NULL; 
+  }
+
+  TileNode* curr = head;
+
+  for (S32 i = 1; i < index; ++i) {
+    curr = curr->next;
+  }
+  return curr->tile;
+}
+
+
+
 inline void print_world_pos(WorldPosition pos){
   char buff[255];
   sprintf(buff, "chunk_pos.x = %d, chunk_pos.y = %d, x = %.2f, y = %.2f\n",pos.chunk_pos.x, pos.chunk_pos.y, pos.offset.x, pos.offset.y);
@@ -13,7 +86,6 @@ inline void print_V2_F32(V2_F32 pos){
   sprintf(buff, "x = %.2f, y = %.2f\n", pos.x, pos.y);
   OutputDebugStringA(buff);
 }
-
 
 inline B32 is_valid(WorldPosition p) {
   B32 result = (p.chunk_pos.x != TILE_CHUNK_UNINITILIZED);
@@ -31,6 +103,16 @@ inline B32 are_in_same_chunk(V2_S32 chunk_pos, WorldPosition p) {
   return result;
 }
 
+function void initilize_chunk_tiles(World* world, WorldChunk* chunk){
+  for (S32 x = -8; x <= 8; x++) {
+    for (S32 y = -4; y <= 4; y++) {
+      Tile* tile = &chunk->tiles[(x+8) + ((y+4) * TILE_COUNT_PER_WIDTH)];
+      tile->color = V4{1.0f, 1.0f, 1.0f, 0.2f};
+      tile->tile_pos = V2_S32{x, y};
+    }
+  }
+}
+
 function WorldChunk* add_new_chunk(MemoryArena* arena, World* world, WorldChunk* head, V2_S32 chunk_pos) {
   assert(head);
   WorldChunk* new_chunk = push_struct(arena, WorldChunk);
@@ -38,17 +120,19 @@ function WorldChunk* add_new_chunk(MemoryArena* arena, World* world, WorldChunk*
   new_chunk->next = NULL;
   new_chunk->node = NULL;
   new_chunk->entity_count = 0;
+
   WorldChunk* curr = head;
 
   while (curr->next) {
     curr = curr->next;
   }
   curr->next = new_chunk;
+  initilize_chunk_tiles(world, new_chunk);
   return new_chunk;
 }
 
 //This will return the world chunk with chunk_pos.x and chunk_pos.y exactly of p
-inline WorldChunk* get_world_chunk(World* world, V2_S32 chunk_pos, MemoryArena* arena = 0) {
+function WorldChunk* get_world_chunk(World* world, V2_S32 chunk_pos, MemoryArena* arena = 0) {
   U32 hash = 19 * chunk_pos.x + 7 * chunk_pos.y;
   U32 hash_slot = hash % (array_count(world->chunk_hash) - 1);
 
@@ -63,6 +147,7 @@ inline WorldChunk* get_world_chunk(World* world, V2_S32 chunk_pos, MemoryArena* 
     if (chunk->chunk_pos.x == TILE_CHUNK_UNINITILIZED) {
       chunk->chunk_pos = chunk_pos;
       chunk->entity_count = 0;
+      initilize_chunk_tiles(world, chunk);
       break;
     }
     chunk = chunk->next;
@@ -72,6 +157,15 @@ inline WorldChunk* get_world_chunk(World* world, V2_S32 chunk_pos, MemoryArena* 
   }
   return chunk;
 }
+
+function Tile* get_tile(World* world, WorldPosition pos){
+  WorldChunk* chunk = get_world_chunk(world, pos.chunk_pos);
+  S32 x = ((S32)roundf(pos.offset.x) + 8);
+  S32 y = ((S32)roundf(pos.offset.y) + 4);
+  Tile* tile = &chunk->tiles[x + y * TILE_COUNT_PER_WIDTH];
+  return tile; 
+}
+
 
 //TODO: make sure the entity was the removed and the new_p was added
 inline void change_entity_location_raw(MemoryArena* arena, World* world, U32 entity_index, WorldPosition old_p, WorldPosition new_p) {
@@ -127,8 +221,12 @@ function void initilize_world(World* world, S32 buffer_width, S32 buffer_height)
   world->meters_to_pixels = min(buffer_height/TILE_COUNT_PER_HEIGHT, buffer_width/TILE_COUNT_PER_WIDTH);
 
   for (U32 i = 0; i < array_count(world->chunk_hash); i += 1) {
-    world->chunk_hash[i] = {};
-    world->chunk_hash[i].chunk_pos.x = TILE_CHUNK_UNINITILIZED;
+    WorldChunk* chunk = &world->chunk_hash[i]; 
+    *chunk = {};
+    chunk->chunk_pos.x = TILE_CHUNK_UNINITILIZED;
+
+#if 0
+#endif
   }
 }
 
@@ -170,26 +268,33 @@ function WorldPosition create_world_pos(V2_S32 chunk_pos, F32 off_x, F32 off_y) 
   return result;
 }
 
-function void update_camera(GameState* game_state, V2_F32* camera_ddp){
-	if(!game_state->chunk_animation.is_active){
-		LowEntity* player = game_state->low_entities + game_state->player_index;
-		WorldPosition* camera = &game_state->camera_p;
-		V2_F32 entity_cam_space = subtract(game_state->world, &player->pos, &game_state->camera_p);
-		World* world = game_state->world;
+function void update_camera(GameState* game_state, V2_F32 camera_ddp){
 
-		if(entity_cam_space.x > 5.0f){
-			camera_ddp->x = 1.0f;
-		}
-		else if(entity_cam_space.x < -5.0f ){
-			camera_ddp->x = -1.0f;
-		}
-		if(entity_cam_space.y > 2.0f){
-			camera_ddp->y = 1;
-		}
-		else if( entity_cam_space.y < -2.0f ){
-			camera_ddp->y = -1;
-		}
-	}
+  Animation* animation = &game_state->chunk_animation;
+
+  if(!animation->is_active){
+    if(camera_ddp.x != 0 || camera_ddp.y != 0){
+      animation->is_active = 1;
+
+      //Here the source and dest is in chunk position
+      animation->source = game_state->camera_p.offset;
+      animation->dest.x += (camera_ddp.x * game_state->world->chunk_size_in_meters.x);
+      animation->dest.y += (camera_ddp.y * game_state->world->chunk_size_in_meters.y);
+      animation->ddp.x = camera_ddp.x * game_state->world->chunk_size_in_meters.x;
+      animation->ddp.y = camera_ddp.y * game_state->world->chunk_size_in_meters.y;
+      animation->completed = 0;
+    }
+  }else{
+    if(animation->completed > 100){
+      animation->is_active = false;
+    }else{
+      V2_S32 chunk_diff = animation->ddp;
+      F32 add_x = (F32)chunk_diff.x /20.0f;
+      F32 add_y = (F32)chunk_diff.y /20.0f;
+      game_state->camera_p = map_into_world_position(game_state->world, &game_state->camera_p, V2_F32{add_x, add_y});
+      animation->completed += 5;
+    }
+  }
 }
 
 
@@ -212,6 +317,8 @@ function void bubble_sort_entities(GameState* game_state, EntityNode* head){
       LowEntity* index_entity = &game_state->low_entities[index->entity_index];
 
       if(!(curr_entity->sim.type == entity_type_null || index_entity->sim.type == entity_type_null)){
+
+
         if(curr_entity->pos.offset.y <= index_entity->pos.offset.y){
           temp = curr->entity_index;
           curr->entity_index = index->entity_index;
@@ -224,8 +331,13 @@ function void bubble_sort_entities(GameState* game_state, EntityNode* head){
   }
 }
 
-
-
+function void push_bitmap(BitmapArray* bitmap_array, LoadedBitmap* bitmap){
+  assert(bitmap_array);
+  assert(bitmap);
+  assert(bitmap_array->count < 300); //FIXME: Magic number
+  bitmap_array->bitmaps[bitmap_array->count] = *bitmap;
+  bitmap_array->count++;
+}
 
 
 

@@ -22,7 +22,6 @@ function SimEntity* add_entity(GameState* game_state, SimRegion* region, U32 low
   return entity;
 }
 
-
 function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, World* world, WorldPosition center, Rec2 bounds) {
 
   //Initilize sim
@@ -35,9 +34,7 @@ function SimRegion* begin_sim(MemoryArena* sim_arena, GameState* game_state, Wor
   //NOTE: good programming
   sim_region->max_count = 1024;
   sim_region->entity_count = 0;
-
   sim_region->entities = push_array(sim_arena, sim_region->max_count, SimEntity);
-
 
   //TODO: take the world_position and get the camera_relative positon of
   //Min corner and max corner
@@ -75,8 +72,17 @@ function void end_sim(SimRegion* region, GameState* game_state) {
   SimEntity* entity = region->entities;
   for (U32 i = 0; i < region->entity_count; i += 1, ++entity) {
     LowEntity* stored = game_state->low_entities + entity->storage_index;
+
+    entity->flags = stored->sim.flags; //FIXME:
     stored->sim = *entity;
     WorldPosition new_world_p = map_into_world_position(region->world, &region->center, entity->pos);
+    WorldPosition old_pos = stored->pos;
+
     change_entity_location(&game_state->world_arena, region->world, entity->storage_index, stored, new_world_p);
+
+    //Change tile's entity
+    Tile* old_tile = get_tile(game_state->world, old_pos);
   }
 }
+
+

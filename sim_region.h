@@ -1,5 +1,15 @@
 #ifndef SIM_REGION
 
+//TODO: we need this for player
+struct Animation{
+  B32 is_active;
+  V2_F32 dest;
+  V2_F32 source;
+  V2_S32 ddp;
+  B32 forced;
+  S32 completed; //In %
+};
+
 enum EntityType{
   entity_type_null,
   entity_type_player,
@@ -7,15 +17,16 @@ enum EntityType{
   entity_type_wall,
   entity_type_temple,
   entity_type_grass,
-  entity_type_fire_torch
+  entity_type_fire_torch,
+  entity_type_tile, //NOTE: based
+  entity_type_number,
+  entity_type_letter,
 };
 
 enum EntityFlags{
-  //This are all used for the player only
-  entity_flag_jumping = (1 << 1),
-  entity_flag_falling = (1 << 2),
-  entity_flag_simming = (1 << 3),
-  entity_on_ground    = (1 << 4),
+  entity_flag_simming = (1 << 1),
+  entity_undo = (1<<2),
+  entity_flag_dead = (1<<8)
 };
 
 
@@ -34,9 +45,17 @@ struct SimEntity{
 
   U32 storage_index;
   U32 flags;
-  
   S32 face_direction;
+
+  union { //could be use for storing other informations for other kinds of entities
+    S64 value_s64;
+    F64 value_f64;
+  };
+
   LoadedBitmap* texture;
+  Animation* animation; //Curently used for player
+  TileNode *tile_path;
+
 };
 
 struct SimRegion{

@@ -10,6 +10,9 @@ struct LowEntity{
   SimEntity sim;
 };
 
+/**
+ * Helper function to add and remove flags
+ */
 inline void add_flag(SimEntity* entity, U32 flag){
   assert(entity);
   entity->flags |= flag;
@@ -26,13 +29,6 @@ inline void clear_flag(SimEntity* entity, U32 flag){
   entity->flags &= ~flag;
 }
 
-struct ChunkAnimation{
-  B32 is_active;
-  WorldPosition dest;
-  WorldPosition source;
-  S32 completed; //In %
-};
-
 enum Asset_Enum{
   asset_background,
   asset_temple,
@@ -40,15 +36,22 @@ enum Asset_Enum{
   asset_player_left,
   asset_wall,
   asset_grass,
-	asset_count
+  asset_banner_tile,
+  asset_fire_torch,
+  asset_count
 };
 
 struct Asset{
   LoadedBitmap bitmaps[asset_count];
 };
 
+struct FontAsset{
+  LoadedBitmap bitmaps[96];
+};
+
 struct GameState{
   MemoryArena world_arena;
+
   World* world;
   WorldPosition camera_p;
   Rec2 camera_bounds;
@@ -57,11 +60,23 @@ struct GameState{
   B32 is_initilized;
   S32 controlled_entity_index[5];
   S32 player_index;
-  Config tokens;
-  ChunkAnimation chunk_animation;
+  S32 debug_index;
+  Animation chunk_animation; //@debug
+  Asset asset;
+  FontAsset font_asset;
 
-  LoadedBitmap test_font;
-	Asset asset;
+  Config tokens;
+
+  V2_S32 curr_chunk; //basically the current level
+  
+  bool show_tiles;
+};
+
+
+struct MoveSpec{
+  B32 unit_max_accel_vector;
+  F32 speed;
+  F32 drag;
 };
 
 #define GAME_H

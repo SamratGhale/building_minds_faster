@@ -1,7 +1,19 @@
 (Currently working on)
-Tile
-player movement use all the movement to create animation effect while moving
 
+//TODO
+put the path_linked list in WorldChunk 
+
+simple level
+
+2 + 3 = 5
+
+top banner     (BITMAP ARRAY)
+bottom bannner (BITMAP ARRAY)
+
+
+-----------------------------------------------------
+
+each tiles has linked list of entites
 
 (World Building Platform)
 ->implement zoom in and zoom out (scrolling and grabbing by mouse)
@@ -26,3 +38,8 @@ player movement use all the movement to create animation effect while moving
 ->Points and stuffs
 ->Connections between the chunk_poss
 ->Save and Load
+
+
+///Scratch ideas
+play alot of level at the same time line in open world
+more interactive suduko

@@ -104,7 +104,7 @@ function OpenglInfo opengl_init(B32 modern_context){
   OpenglInfo info = opengl_get_info(modern_context);
   opengl_config.default_internal_text_format = GL_RGBA8;
   if(info.GL_EXT_texture_sRGB){
-   opengl_config.default_internal_text_format = GL_SRGB8_ALPHA8;
+    opengl_config.default_internal_text_format = GL_SRGB8_ALPHA8;
   }
   if(info.GL_EXT_framebuffer_sRGB){
     glEnable(GL_FRAMEBUFFER_SRGB);
@@ -112,101 +112,171 @@ function OpenglInfo opengl_init(B32 modern_context){
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
-
   char* vertex_code = (char* )read_entire_file("../vert.glsl").contents;
   char* fragment_code = (char*)read_entire_file("../frag.glsl").contents;
 
   //might need the header code later
   opengl_config.basic_light_program = opengl_create_program(vertex_code, fragment_code);
   opengl_config.transform_id = glGetUniformLocation(opengl_config.basic_light_program, "mat");
+  opengl_config.tile_uniform = glGetUniformLocation(opengl_config.basic_light_program, "tiles");
+
+  opengl_config.light_pos_id =
+    glGetUniformLocation(opengl_config.basic_light_program, "light_pos");
+  opengl_config.use_light =
+    glGetUniformLocation(opengl_config.basic_light_program, "use_light");
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glLineWidth(1);
+
   return info;
 }
 
-//All of the int arguements is in pixels
-inline void opengl_bitmap(LoadedBitmap *image, F32 min_x, F32 min_y, S32 width, S32 height){
-  F32 max_x  = min_x + width;
-  F32 max_y  = min_y + height;
+function void opengl_init_texture(OpenglContext* context, V2_F32 min_p, V2_F32 max_p, V4 color,  S32 width, S32 height, LoadedBitmap* image = NULL){
 
-  V2_F32 min_p = {(F32)min_x, (F32)min_y};
-  V2_F32 max_p = {(F32)max_x, (F32)max_y};
-
-  //The coordinates are always the same just change the position
   F32 vertices[] = {
-    max_x,  max_y, 0.0f,   0.0f, 0.0f, // top right
-    max_x,  min_y, 0.0f,   0.0f, 1.0f, // bottom right
-    min_x,  min_y, 0.0f,   1.0f, 1.0f, // bottom left
-    min_x,  max_y, 0.0f,   1.0f, 0.0f  // top left 
+    max_p.x,  max_p.y, 0.0f,   0.0f, 0.0f, color.r, color.g, color.b, color.a, // top right
+    max_p.x,  min_p.y, 0.0f,   0.0f, 1.0f, color.r, color.g, color.b, color.a, // bottom right
+    min_p.x,  min_p.y, 0.0f,   1.0f, 1.0f, color.r, color.g, color.b, color.a, // bottom left
+    min_p.x,  max_p.y, 0.0f,   1.0f, 0.0f, color.r, color.g, color.b, color.a // top left 
   };
 
+  glGenVertexArrays(1, &context->vao);
+  glGenBuffers(1, &context->vbo);
+  glGenBuffers(1, &context->ebo);
 
-  glActivateTexture(GL_TEXTURE0);
-  if(image->tex_handle != 0){
-    glBindTexture(GL_TEXTURE_2D, image->tex_handle);
-    glBindVertexArray(image->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, image->vbo);
-
-    V2_F32 top_right    = V2_F32{max_x, max_y};
-    V2_F32 bottom_right = V2_F32{max_x, min_y};
-    V2_F32 bottom_left  = V2_F32{min_x, min_y};
-    V2_F32 top_left     = V2_F32{min_x, max_y};
-
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 2 * sizeof(float), (const GLvoid*)top_right.e);
-    glBufferSubData(GL_ARRAY_BUFFER, 1 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_right.e);
-    glBufferSubData(GL_ARRAY_BUFFER, 2 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_left.e);
-    glBufferSubData(GL_ARRAY_BUFFER, 3 * 5 * sizeof(float), 2 * sizeof(float), (const GLvoid*)top_left.e);
-
-  }else{
-    glGenVertexArrays(1, &image->vao);
-    glGenBuffers(1, &image->vbo);
-    glGenBuffers(1, &image->ebo);
-
-    GLuint handle;
-    glGenTextures(1, &handle);
-    image->tex_handle = handle;
-    glBindTexture(GL_TEXTURE_2D, image->tex_handle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width, image->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, image->pixels);
+  if(image){
+    glGenTextures(1, &context->tex_handle);
+    glBindTexture(GL_TEXTURE_2D, context->tex_handle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, image->pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);    
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  }
 
-    U32 indices[] = {
-      0, 1, 3, //First triangle
-      1, 2, 3  //Second triangle
-    };
-    glBindVertexArray(image->vao);
+  U32 indices[] = {
+    0, 1, 3, //First triangle
+    1, 2, 3  //Second triangle
+  };
+  glBindVertexArray(context->vao);
+  glBindBuffer(GL_ARRAY_BUFFER, context->vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, context->ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, image->vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, image->ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
-
-   }
-
-
-    //TODO: use GL_TRUE in normalized and use the world position?
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(F32), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(F32), (void*)(3 * sizeof(F32)));
-    glEnableVertexAttribArray(1);
-
-
-
-    GLuint xy_pos = glGetUniformLocation(opengl_config.basic_light_program, "xy_pos");
-    glUniform2i(xy_pos, min_x, min_y);
-    glBindVertexArray(image->vao);
-
-
-    glUseProgram(opengl_config.basic_light_program);
-    //glUniformMatrix4fv(opengl_config.transform_id, 1, GL_FALSE, &proj[0]);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    //opengl_rectangle(min_p, max_p, V4{1,1 ,1,1});
-    glUseProgram(0);
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 9 * sizeof(F32), (void*)(3 * sizeof(F32)));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 9 * sizeof(F32), (void*)0);
+  glVertexAttribPointer(2, 4, GL_FLOAT, GL_TRUE, 9 * sizeof(F32), (void*)(5 * sizeof(F32))); 
 
 }
+
+function void opengl_update_vertex_data(OpenglContext* context, V2_F32 min_p, V2_F32 max_p, V4 color = V4{-1,-1,-1,-1}){
+
+  glBindVertexArray(context->vao);
+  glBindBuffer(GL_ARRAY_BUFFER, context->vbo);
+
+  V2_F32 top_right    = V2_F32{max_p.x, max_p.y};
+  V2_F32 bottom_right = V2_F32{max_p.x, min_p.y};
+  V2_F32 bottom_left  = V2_F32{min_p.x, min_p.y};
+  V2_F32 top_left     = V2_F32{min_p.x, max_p.y};
+
+  glBufferSubData(GL_ARRAY_BUFFER, 0, 2 * sizeof(float), (const GLvoid*)top_right.e);
+  glBufferSubData(GL_ARRAY_BUFFER, 1 * 9 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_right.e);
+  glBufferSubData(GL_ARRAY_BUFFER, 2 * 9 * sizeof(float), 2 * sizeof(float), (const GLvoid*)bottom_left.e);
+  glBufferSubData(GL_ARRAY_BUFFER, 3 * 9 * sizeof(float), 2 * sizeof(float), (const GLvoid*)top_left.e);
+
+  if(color.r == -1){
+    glBindTexture(GL_TEXTURE_2D, context->tex_handle);
+    glBufferSubData(GL_ARRAY_BUFFER, 0 * 9 * sizeof(float) + 5*sizeof(float), 4 * sizeof(float), (const GLvoid*)color.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 1 * 9 * sizeof(float) + 5*sizeof(float), 4 * sizeof(float), (const GLvoid*)color.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 2 * 9 * sizeof(float) + 5*sizeof(float), 4 * sizeof(float), (const GLvoid*)color.e);
+    glBufferSubData(GL_ARRAY_BUFFER, 3 * 9 * sizeof(float) + 5*sizeof(float), 4 * sizeof(float), (const GLvoid*)color.e);
+  }
+}
+
+
+function void opengl_tile(V2_F32 cam_offset, World *world, Tile *tile, WorldChunk* chunk) {
+  F32 mtop = world->meters_to_pixels;
+  V2_F32 csim = world->chunk_size_in_meters;
+
+  F32 center_x = (csim.x * 0.5f + csim.x * chunk->chunk_pos.x - cam_offset.x ) * mtop ;
+  F32 center_y = (csim.y * 0.5f + csim.y * chunk->chunk_pos.y - cam_offset.y ) * mtop ;
+
+  F32 min_x = (center_x + tile->tile_pos.x * mtop) - (mtop * 0.5f);
+  F32 min_y = (center_y + tile->tile_pos.y * mtop) - (mtop * 0.5f);
+  F32 max_x = min_x + mtop;
+  F32 max_y = min_y + mtop;
+
+
+  if(!tile->initlized){
+    opengl_init_texture(&tile->gl_context, V2_F32{min_x, min_y}, V2_F32{max_x, max_y}, tile->color, mtop, mtop);
+    tile->initlized = true;
+  }else{
+    opengl_update_vertex_data(&tile->gl_context, V2_F32{min_x, min_y}, V2_F32{max_x, max_y}, tile->color);
+  }
+
+  glUseProgram(opengl_config.basic_light_program);
+  if(is_flag_set(tile, tile_path)){
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  }
+}
+
+//All of the int arguements is in pixels
+function void opengl_bitmap(LoadedBitmap *image, F32 min_x, F32 min_y, S32 width, S32 height){
+  F32 max_x  = min_x + width;
+  F32 max_y  = min_y + height;
+
+  //The coordinates are always the same just change the position
+  if(image->gl_context.tex_handle == 0){
+
+    if(image->width <=1.0f || image->height <= 1.0f){
+
+      //Calculate width and height
+
+      S32 width = image->pitch / BITMAP_BYTES_PER_PIXEL;
+      S32 height = image->total_size/image->pitch;
+
+      opengl_init_texture(&image->gl_context, V2_F32{min_x, min_y}, V2_F32{max_x, max_y}, V4{0,0,0,0}, width, height, image);
+    }else{
+
+
+      opengl_init_texture(&image->gl_context, V2_F32{min_x, min_y}, V2_F32{max_x, max_y}, V4{0,0,0,0}, image->width, image->height, image);
+    }
+      
+  }else{
+    opengl_update_vertex_data(&image->gl_context, V2_F32{min_x, min_y}, V2_F32{max_x, max_y});
+  }
+  glUseProgram(opengl_config.basic_light_program);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+function void opengl_bitmap_array(BitmapArray* array){
+
+  F32 min_x = 200;
+  F32 min_y = 200;
+
+  for (int i = 0; i < array->count; ++i) {
+    LoadedBitmap *bitmap = &array->bitmaps[i];
+    F32 diff_y = min_y;// - bitmap->height) ; 
+
+
+    opengl_bitmap(bitmap, min_x , diff_y, bitmap->width, bitmap->height);
+    min_x += bitmap->width;
+  }  
+}
+
+
+
+
+
+
+
+
+
 
