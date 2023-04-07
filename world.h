@@ -1,8 +1,8 @@
 #ifndef WORLD
 #define TILE_CHUNK_UNINITILIZED INT32_MAX
 
-#define TILE_COUNT_PER_WIDTH  17
-#define TILE_COUNT_PER_HEIGHT 9
+#define TILE_COUNT_PER_WIDTH  16
+#define TILE_COUNT_PER_HEIGHT 10
 
 struct WorldPosition{
   V2_S32 chunk_pos; 
@@ -79,12 +79,16 @@ struct WorldChunk{
   V2_F32 player_offset;
   
   U32 entity_count;
-  EntityNode* node;
-  WorldChunk* next;
+  U32 player_index; //this is storage index because 
   Tile tiles[TILE_COUNT_PER_HEIGHT * TILE_COUNT_PER_WIDTH];
 
   Banner top_banner;
   Banner bottom_banner;
+
+  
+  TileNode *tile_path;
+  EntityNode* node;
+  WorldChunk* next;
 };
 
 struct World{

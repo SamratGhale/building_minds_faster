@@ -29,28 +29,7 @@ inline void clear_flag(SimEntity* entity, U32 flag){
   entity->flags &= ~flag;
 }
 
-enum Asset_Enum{
-  asset_background,
-  asset_temple,
-  asset_player_right,
-  asset_player_left,
-  asset_wall,
-  asset_grass,
-  asset_banner_tile,
-  asset_fire_torch,
-  asset_count
-};
-
-struct Asset{
-  LoadedBitmap bitmaps[asset_count];
-};
-
-struct FontAsset{
-  LoadedBitmap bitmaps[96];
-};
-
 struct GameState{
-  MemoryArena world_arena;
 
   World* world;
   WorldPosition camera_p;
@@ -58,12 +37,8 @@ struct GameState{
   U32 low_entity_count;
   LowEntity low_entities[1000];
   B32 is_initilized;
-  S32 controlled_entity_index[5];
-  S32 player_index;
   S32 debug_index;
   Animation chunk_animation; //@debug
-  Asset asset;
-  FontAsset font_asset;
 
   Config tokens;
 

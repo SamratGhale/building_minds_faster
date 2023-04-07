@@ -78,7 +78,7 @@ function void end_sim(SimRegion* region, GameState* game_state) {
     WorldPosition new_world_p = map_into_world_position(region->world, &region->center, entity->pos);
     WorldPosition old_pos = stored->pos;
 
-    change_entity_location(&game_state->world_arena, region->world, entity->storage_index, stored, new_world_p);
+    change_entity_location(&platform.arena, region->world, entity->storage_index, stored, new_world_p);
 
     //Change tile's entity
     Tile* old_tile = get_tile(game_state->world, old_pos);

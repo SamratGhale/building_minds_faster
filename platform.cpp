@@ -11,6 +11,7 @@ global_variable B32 running = 1;
 global_variable OffscreenBuffer back_buffer;
 global_variable GLuint global_tex_handle;
 global_variable GLuint OpenGLDefaultInternalTextureFormat;
+global_variable PlatformState platform = {};
 
 //file struffs
 typedef size_t GLsizeiptr;
@@ -86,6 +87,7 @@ global_variable OpenglConfig opengl_config;
 
 #include "bmf_opengl.cpp"
 #include "game.cpp"
+#include "menu.cpp"
 
 inline U64 get_file_time(char* file_name){
   FILETIME last_write_time = {};
@@ -234,13 +236,14 @@ function void process_pending_messages(ControllerInput* keyboard_controller) {
           } else if (vk_code == VK_RIGHT) {
             process_keyboard_message(&keyboard_controller->action_right, is_down);
           } else if (vk_code == VK_ESCAPE) {
-            running = false;
+            process_keyboard_message(&keyboard_controller->escape, is_down);
           } else if (vk_code == VK_SPACE) {
             process_keyboard_message(&keyboard_controller->start, is_down);
           } else if (vk_code == VK_BACK) {
             process_keyboard_message(&keyboard_controller->back, is_down);
-          }
-          else if(vk_code == 'L'){
+          } else if (vk_code == VK_RETURN) {
+            process_keyboard_message(&keyboard_controller->enter, is_down);
+          } else if(vk_code == 'L'){
             process_keyboard_message(&keyboard_controller->Key_l, is_down);
           }
           else if(vk_code == 'T'){
@@ -270,8 +273,9 @@ LRESULT CALLBACK window_callback(HWND window, UINT message, WPARAM WParam, LPARA
   switch (message) {
   case WM_PAINT: { //Resize shouldn't be that easily available now that we have pixels in the game
   PAINTSTRUCT Paint;
-  HDC hdc = BeginPaint(window, &Paint);
   WindowDimention dim = get_window_dimention(window);
+  resize_buffer(&back_buffer, dim.width, dim.height);
+  HDC hdc = BeginPaint(window, &Paint);
   display_buffer_in_window(hdc, dim.width, dim.height);
   EndPaint(window, &Paint);
 }break;
@@ -393,17 +397,12 @@ function void win32_init_opengl(HWND window){
     window_class.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
     RegisterClassA(&window_class);
 
-    HWND window = CreateWindowExA(0,window_class.lpszClassName,"Playing around", WS_OVERLAPPED | WS_VISIBLE , CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,  0, 0, instance, 0);
+    HWND window = CreateWindowExA(0,window_class.lpszClassName,"Playing around", WS_OVERLAPPED | WS_VISIBLE , CW_USEDEFAULT, CW_USEDEFAULT, 1744, 1119,  0, 0, instance, 0);
 
   //Remove maximize window
   //SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZEBOX); 
 
   //Window init finish
-    RECT rect;
-    GetWindowRect(window, &rect);
-    S32 width  = rect.right  - rect.left;
-    S32 height = rect.bottom - rect.top;
-    resize_buffer(&back_buffer, width, height);
   //Game State initilize
     GameInput input[2] = {};
     GameInput* old_input = &input[0];
@@ -411,12 +410,17 @@ function void win32_init_opengl(HWND window){
 
   //Allocation of memory for the arena
 
-    PlatformState platform_state = {};
-    platform_state.permanent_storage_size = Gigabytes(1);
-    platform_state.temporary_storage_size = Gigabytes(1);
-    platform_state.total_size = platform_state.permanent_storage_size + platform_state.temporary_storage_size;
-    platform_state.permanent_storage = VirtualAlloc(0, (size_t)platform_state.total_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    platform_state.temporary_storage = (U8*)platform_state.permanent_storage + platform_state.permanent_storage_size;
+    platform.permanent_storage_size = Gigabytes(1);
+    platform.temporary_storage_size = Gigabytes(1);
+    platform.total_size = platform.permanent_storage_size + platform.temporary_storage_size;
+    platform.permanent_storage = VirtualAlloc(0, (size_t)platform.total_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    platform.temporary_storage = (U8*)platform.permanent_storage + platform.permanent_storage_size;
+
+    platform.game_mode = game_mode_menu;
+
+    initilize_arena(&platform.arena, platform.permanent_storage_size, (U8*)platform.permanent_storage + sizeof(GameState) + sizeof(MenuState));
+
+    platform.font_asset = load_font_asset(&platform.arena);
 
     win32_init_opengl(window);
     while (running) {
@@ -497,7 +501,18 @@ function void win32_init_opengl(HWND window){
         // NOTE: Controller unavailable
         }
       };
-      render_game(&back_buffer, &platform_state, new_input);
+      switch(platform.game_mode){
+        case game_mode_menu:{
+          render_menu(&back_buffer, new_input);
+        }break;
+        case game_mode_view:
+        case game_mode_play:{
+          render_game(&back_buffer, &platform, new_input);
+        }break;
+        case game_mode_exit:{
+          return 0;
+        }break;
+      }
       WindowDimention dim = get_window_dimention(window);
       display_buffer_in_window(hdc, dim.width, dim.height);
       ReleaseDC(window, hdc);

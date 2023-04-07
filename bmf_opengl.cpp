@@ -205,8 +205,8 @@ function void opengl_tile(V2_F32 cam_offset, World *world, Tile *tile, WorldChun
   F32 mtop = world->meters_to_pixels;
   V2_F32 csim = world->chunk_size_in_meters;
 
-  F32 center_x = (csim.x * 0.5f + csim.x * chunk->chunk_pos.x - cam_offset.x ) * mtop ;
-  F32 center_y = (csim.y * 0.5f + csim.y * chunk->chunk_pos.y - cam_offset.y ) * mtop ;
+  F32 center_x = (csim.x * 0.5f - cam_offset.x ) * mtop ;
+  F32 center_y = (csim.y * 0.5f - cam_offset.y ) * mtop ;
 
   F32 min_x = (center_x + tile->tile_pos.x * mtop) - (mtop * 0.5f);
   F32 min_y = (center_y + tile->tile_pos.y * mtop) - (mtop * 0.5f);
@@ -254,21 +254,6 @@ function void opengl_bitmap(LoadedBitmap *image, F32 min_x, F32 min_y, S32 width
   }
   glUseProgram(opengl_config.basic_light_program);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-function void opengl_bitmap_array(BitmapArray* array){
-
-  F32 min_x = 200;
-  F32 min_y = 200;
-
-  for (int i = 0; i < array->count; ++i) {
-    LoadedBitmap *bitmap = &array->bitmaps[i];
-    F32 diff_y = min_y;// - bitmap->height) ; 
-
-
-    opengl_bitmap(bitmap, min_x , diff_y, bitmap->width, bitmap->height);
-    min_x += bitmap->width;
-  }  
 }
 
 

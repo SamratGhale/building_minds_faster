@@ -2,16 +2,16 @@
 #include "game.h"
 #include <stdio.h>
 
-function void append_tile(SimEntity* entity, Tile* new_tile, MemoryArena* arena){
+function void append_tile(WorldChunk* chunk, Tile* new_tile, MemoryArena* arena){
 
   add_flag(new_tile, tile_path);
-  if(entity->tile_path == NULL){
-    entity->tile_path = push_struct(arena, TileNode); 
-    entity->tile_path->tile = new_tile;
-    entity->tile_path->next = NULL;
+  if(chunk->tile_path == NULL){
+    chunk->tile_path = push_struct(arena, TileNode); 
+    chunk->tile_path->tile = new_tile;
+    chunk->tile_path->next = NULL;
   }
   else{
-    TileNode* curr = entity->tile_path;
+    TileNode* curr = chunk->tile_path;
     while(curr->next){
       curr = curr->next;
     }
@@ -217,8 +217,9 @@ inline void change_entity_location(MemoryArena* arena, World* world, U32 entity_
 
 function void initilize_world(World* world, S32 buffer_width, S32 buffer_height) {
 
-  world->chunk_size_in_meters = V2_F32{TILE_COUNT_PER_WIDTH , TILE_COUNT_PER_HEIGHT};
   world->meters_to_pixels = min(buffer_height/TILE_COUNT_PER_HEIGHT, buffer_width/TILE_COUNT_PER_WIDTH);
+
+  world->chunk_size_in_meters = V2_F32{TILE_COUNT_PER_WIDTH , TILE_COUNT_PER_HEIGHT};
 
   for (U32 i = 0; i < array_count(world->chunk_hash); i += 1) {
     WorldChunk* chunk = &world->chunk_hash[i]; 
@@ -287,11 +288,14 @@ function void update_camera(GameState* game_state, V2_F32 camera_ddp){
   }else{
     if(animation->completed > 100){
       animation->is_active = false;
+      game_state->camera_p.offset = {};
+      game_state->curr_chunk = game_state->camera_p.chunk_pos;
     }else{
       V2_S32 chunk_diff = animation->ddp;
       F32 add_x = (F32)chunk_diff.x /20.0f;
       F32 add_y = (F32)chunk_diff.y /20.0f;
       game_state->camera_p = map_into_world_position(game_state->world, &game_state->camera_p, V2_F32{add_x, add_y});
+      //game_state->curr_chunk = game_state->camera_p.chunk_pos;
       animation->completed += 5;
     }
   }
@@ -330,16 +334,6 @@ function void bubble_sort_entities(GameState* game_state, EntityNode* head){
     curr = curr->next;
   }
 }
-
-function void push_bitmap(BitmapArray* bitmap_array, LoadedBitmap* bitmap){
-  assert(bitmap_array);
-  assert(bitmap);
-  assert(bitmap_array->count < 300); //FIXME: Magic number
-  bitmap_array->bitmaps[bitmap_array->count] = *bitmap;
-  bitmap_array->count++;
-}
-
-
 
 
 

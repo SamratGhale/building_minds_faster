@@ -54,7 +54,6 @@ struct SimEntity{
 
   LoadedBitmap* texture;
   Animation* animation; //Curently used for player
-  TileNode *tile_path;
 
 };
 

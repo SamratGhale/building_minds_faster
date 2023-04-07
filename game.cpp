@@ -31,10 +31,6 @@ function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x, F32 p_de
   return hit;
 }
 
-function void update_animation_chunk(){
-
-}
-
 function void update_animation_player(GameState* game_state,  V2_S32 ddp, SimEntity* entity, LowEntity* low, B32 force = false){
   //Smooth chunk_pos start
   Animation* animation = entity->animation;
@@ -72,7 +68,7 @@ function void update_animation_player(GameState* game_state,  V2_S32 ddp, SimEnt
       assert(chunk);
 
       if(!animation->forced){
-        append_tile(entity, tile, &game_state->world_arena); 
+        append_tile(chunk, tile, &platform.arena); 
 
         if(is_flag_set(tile, tile_end)){
 
@@ -157,14 +153,16 @@ function void undo_player(GameState*  game_state, LowEntity* low_entity, V2_S32*
   SimEntity* sim = &low_entity->sim;
   Animation* animation = low_entity->sim.animation;
 
-  S32 len = get_path_length(sim->tile_path);
+  WorldChunk* chunk = get_world_chunk(game_state->world, game_state->curr_chunk);
+  S32 len = get_path_length(chunk->tile_path);
 
-  if((get_path_length(sim->tile_path) > 1) && !animation->is_active){
+
+  if((len > 1) && !animation->is_active){
     V2_S32 diff = {};
     *ddp = diff;
-    Tile* curr_tile = get_last_tile(sim->tile_path); 
-    remove_last_tile(sim->tile_path);
-    Tile* prev_tile = get_last_tile(sim->tile_path); 
+    Tile* curr_tile = get_last_tile(chunk->tile_path); 
+    remove_last_tile(chunk->tile_path);
+    Tile* prev_tile = get_last_tile(chunk->tile_path); 
     assert(prev_tile); //because we are checking this on the if block
     ddp->x = roundf(prev_tile->tile_pos.x) - roundf(curr_tile->tile_pos.x);
     ddp->y = roundf(prev_tile->tile_pos.y) - roundf(curr_tile->tile_pos.y);
@@ -270,7 +268,7 @@ function AddLowEntityResult add_low_entity(GameState* game_state, EntityType typ
   LowEntity* low_entity = game_state->low_entities + entity_index;
   *low_entity = {};
   low_entity->pos = null_pos();
-  change_entity_location(&game_state->world_arena, game_state->world, entity_index, low_entity, p);
+  change_entity_location(&platform.arena, game_state->world, entity_index, low_entity, p);
   //low_entity->pos = p;
   low_entity->sim.color = color;
   low_entity->sim.storage_index = entity_index;
@@ -284,6 +282,8 @@ function AddLowEntityResult add_low_entity(GameState* game_state, EntityType typ
 function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, V2_F32 offset, EntityType type, LoadedBitmap* image, V4 color, V2_F32 size, B32 collides = true){
 
   S32 mtop = game_state->world->meters_to_pixels;
+
+  WorldChunk* chunk = get_world_chunk(game_state->world, chunk_pos);
 
   WorldPosition pos = {};
   pos.chunk_pos = chunk_pos;
@@ -303,8 +303,8 @@ function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, 
   }
 
   if(type == entity_type_player){
-    entity.low->sim.animation = push_struct(&game_state->world_arena, Animation);
-    append_tile(&entity.low->sim, tile, &game_state->world_arena);
+    entity.low->sim.animation = push_struct(&platform.arena, Animation);
+    append_tile(chunk, tile, &platform.arena);
   } else if((type == entity_type_number) || (type == entity_type_letter)){
     add_flag(tile, tile_entity); 
 
@@ -331,7 +331,7 @@ function AddLowEntityResult add_entity(GameState* game_state, V2_S32 chunk_pos, 
 
 function void add_entity_number(GameState* game_state, V2_S32 chunk_pos, V2_F32 offset, S32 val){
 
-  LoadedBitmap* texture = get_font_number(&game_state->font_asset, val);
+  LoadedBitmap* texture = get_font_number(&platform.font_asset, val);
 
   AddLowEntityResult entity = add_entity(game_state, chunk_pos, offset, entity_type_number, texture, V4{1,1,1,1}, V2_F32{1, 1}, false);
 
@@ -340,7 +340,7 @@ function void add_entity_number(GameState* game_state, V2_S32 chunk_pos, V2_F32 
 
 function void add_entity_letter(GameState* game_state, V2_S32 chunk_pos, V2_F32 offset, char val){
 
-  LoadedBitmap* texture = get_font(&game_state->font_asset, val);
+  LoadedBitmap* texture = get_font(&platform.font_asset, val);
 
   AddLowEntityResult entity = add_entity(game_state, chunk_pos, offset, entity_type_letter, texture, V4{1,1,1,1}, V2_F32{1, 1}, false);
 
@@ -355,20 +355,20 @@ function void add_walls_around_chunk_pos(GameState* game_state, V2_S32 chunk_pos
   F32 width  = 1;
   V4 color   = V4{1,1 ,1 ,1};
 
-  LoadedBitmap* one = get_font(&game_state->font_asset, '4');
+  LoadedBitmap* one = get_font(&platform.font_asset, '4');
 
 
 
-  LoadedBitmap* tex_wall = get_asset(&game_state->asset, asset_wall);
-  LoadedBitmap* tex_grass = get_asset(&game_state->asset, asset_grass);
+  LoadedBitmap* tex_wall = get_asset(&platform.asset, asset_wall);
+  LoadedBitmap* tex_grass = get_asset(&platform.asset, asset_grass);
 
-  for(F32 x = -8; x <= 8; x++){
+  for(F32 x = -7; x <= 7; x++){
     add_entity(game_state, chunk_pos, V2_F32{x, -4}, entity_type_wall, tex_wall, color, V2_F32{height, width}, true);
     add_entity(game_state, chunk_pos, V2_F32{x, 4}, entity_type_wall, tex_wall, color, V2_F32{1, 1}, true);
   }
-  for(F32 y = -4; y <= 4; y++){
-    add_entity(game_state, chunk_pos, V2_F32{-8, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, true);
-    add_entity(game_state, chunk_pos, V2_F32{8, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, true);
+  for(F32 y = -3; y <= 3; y++){
+    add_entity(game_state, chunk_pos, V2_F32{-7, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, true);
+    add_entity(game_state, chunk_pos, V2_F32{7, y}, entity_type_wall, tex_wall, color, V2_F32{height, width}, true);
   }
 
 }
@@ -400,32 +400,35 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
   World* world = game_state->world;
 
   //TODO fix this
-  WorldPosition min_chunk = map_into_world_position(game_state->world, camera_pos, get_min_corner(*cam_bounds));
-  WorldPosition max_chunk = map_into_world_position(game_state->world, camera_pos, get_max_corner(*cam_bounds));
+  WorldPosition min_chunk = map_into_world_position(world, camera_pos, get_min_corner(*cam_bounds));
+  WorldPosition max_chunk = map_into_world_position(world, camera_pos, get_max_corner(*cam_bounds));
+
+  if (game_state->show_tiles && !game_state->chunk_animation.is_active) {
+
+    glUseProgram(opengl_config.basic_light_program);
+    glUniform1i(opengl_config.tile_uniform, true);
+    glUseProgram(0);
+
+    WorldChunk* chunk = get_world_chunk(world, game_state->curr_chunk);
+    for (S32 x = 0; x < TILE_COUNT_PER_WIDTH; x++) {
+      for (S32 y = 0; y < TILE_COUNT_PER_HEIGHT; y++) {
+        Tile *tile = &chunk->tiles[x + y * TILE_COUNT_PER_WIDTH];
+        if(is_flag_set(tile, tile_path)){
+          opengl_tile(camera_pos->offset, world, tile,chunk);
+        }
+      }
+    }
+    glUseProgram(opengl_config.basic_light_program);
+    glUniform1i(opengl_config.tile_uniform, false);
+    glUseProgram(0);
+  }
+
   for (S32 y = min_chunk.chunk_pos.y; y <= max_chunk.chunk_pos.y; y++) {
     for (S32 x = min_chunk.chunk_pos.x; x <= max_chunk.chunk_pos.x; x++) {
       WorldChunk* chunk= get_world_chunk(world, V2_S32{x, y});
       while (chunk) {
         EntityNode* node = chunk->node;
         bubble_sort_entities(game_state, node);
-        if (game_state->show_tiles) {
-
-          glUseProgram(opengl_config.basic_light_program);
-          glUniform1i(opengl_config.tile_uniform, true);
-          glUseProgram(0);
-
-          for (S32 x = 0; x < TILE_COUNT_PER_WIDTH; x++) {
-            for (S32 y = 0; y < TILE_COUNT_PER_HEIGHT; y++) {
-              Tile *tile = &chunk->tiles[x + y * TILE_COUNT_PER_WIDTH];
-              if(is_flag_set(tile, tile_path)){
-                opengl_tile(camera_pos->offset, world, tile,chunk);
-              }
-            }
-          }
-          glUseProgram(opengl_config.basic_light_program);
-          glUniform1i(opengl_config.tile_uniform, false);
-          glUseProgram(0);
-        }
 
 
         while (node) {
@@ -440,48 +443,48 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
           if ((is_in_rectangle(*cam_bounds, entity_cam_space))  && !is_flag_set(entity, entity_flag_dead)) {
 
             switch (entity->type) {
-            case entity_type_player:
-            case entity_type_wall:
-            case entity_type_temple:
-            case entity_type_number:
-            case entity_type_letter:
-            case entity_type_fire_torch:
-            case entity_type_grass:{
-              F32 mtop = world->meters_to_pixels;
-              S32 height_pixels = entity->height * mtop;
-              S32 width_pixels  = entity->width  * mtop;
+              case entity_type_player:
+              case entity_type_wall:
+              case entity_type_temple:
+              case entity_type_number:
+              case entity_type_letter:
+              case entity_type_fire_torch:
+              case entity_type_grass:{
+                F32 mtop = world->meters_to_pixels;
+                S32 height_pixels = entity->height * mtop;
+                S32 width_pixels  = entity->width  * mtop;
 
-              F32 center_x = (world->chunk_size_in_meters.x * mtop) * 0.5;
-              F32 center_y = (world->chunk_size_in_meters.y * mtop) * 0.5 ;
+                F32 center_x = (world->chunk_size_in_meters.x * mtop) * 0.5;
+                F32 center_y = (world->chunk_size_in_meters.y * mtop) * 0.5 ;
 
-              F32 min_x = (center_x + entity->pos.x * mtop) - ((F32)width_pixels  *0.5f) ;
-              F32 min_y = (center_y + entity->pos.y * mtop) - ((F32)height_pixels *0.5f);
+                F32 min_x = (center_x + entity->pos.x * mtop) - ((F32)width_pixels  *0.5f) ;
+                F32 min_y = (center_y + entity->pos.y * mtop) - ((F32)height_pixels *0.5f);
 
-              LoadedBitmap* player_left  = get_asset(&game_state->asset,asset_player_left);
-              LoadedBitmap* player_right = get_asset(&game_state->asset,asset_player_right);
+                LoadedBitmap* player_left  = get_asset(&platform.asset,asset_player_left);
+                LoadedBitmap* player_right = get_asset(&platform.asset,asset_player_right);
 
-              if(entity->type == entity_type_player){
-                if(entity->face_direction == 0){
-                  opengl_bitmap(player_left,min_x, min_y, width_pixels, height_pixels);
-                }else{
-                  opengl_bitmap(player_right, min_x, min_y,  width_pixels, height_pixels);
-                }
+                if(entity->type == entity_type_player){
+                  if(entity->face_direction == 0){
+                    opengl_bitmap(player_left,min_x, min_y, width_pixels, height_pixels);
+                  }else{
+                    opengl_bitmap(player_right, min_x, min_y,  width_pixels, height_pixels);
+                  }
 
-                glUseProgram(opengl_config.basic_light_program);
-                glUniform2f(opengl_config.light_pos_id, min_x, min_y);
-                glUseProgram(0);
+                  glUseProgram(opengl_config.basic_light_program);
+                  glUniform2f(opengl_config.light_pos_id, min_x, min_y);
+                  glUseProgram(0);
 
-              }else if((entity->type == entity_type_number) ||(entity->type == entity_type_letter)){
-
-
-                S32 tex_width  = entity->texture->width * mtop;
-                S32 tex_height = entity->texture->height * mtop;
+                }else if((entity->type == entity_type_number) ||(entity->type == entity_type_letter)){
 
 
-                min_x = (center_x + (entity->pos.x * mtop) - tex_width*0.5f) ;
-                min_y = (center_y + (entity->pos.y * mtop) - tex_height*0.5f) ;
+                  S32 tex_width  = entity->texture->width * mtop;
+                  S32 tex_height = entity->texture->height * mtop;
 
-                opengl_bitmap(entity->texture, min_x, min_y, tex_width, tex_height);
+
+                  min_x = (center_x + (entity->pos.x * mtop) - tex_width*0.5f) ;
+                  min_y = (center_y + (entity->pos.y * mtop) - tex_height*0.5f) ;
+
+                  opengl_bitmap(entity->texture, min_x, min_y, tex_width, tex_height);
 
                 /*
                 if(game_state->player_index > 0){
@@ -506,16 +509,16 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
                   }
                 }
                 */
-              }
-              else{
-                opengl_bitmap(entity->texture, min_x , min_y,  width_pixels, height_pixels);
-              }
-            }break;
-            case entity_type_npc: {
-            }break;
-            case entity_type_null: {
+                }
+                else{
+                  opengl_bitmap(entity->texture, min_x , min_y,  width_pixels, height_pixels);
+                }
+              }break;
+              case entity_type_npc: {
+              }break;
+              case entity_type_null: {
               //Do nothing
-            }break;
+              }break;
             }
           }
           node = node->next;
@@ -525,84 +528,83 @@ function void render_entities(Rec2* cam_bounds, WorldPosition* camera_pos, Offsc
 
 
 
-        if(!game_state->chunk_animation.is_active){
 
-          F32 mtop = world->meters_to_pixels;
+        chunk = chunk->next;
+      }
+      if(!game_state->chunk_animation.is_active){
 
-          F32 center_x = (world->chunk_size_in_meters.x * mtop) * 0.5;
-          F32 center_y = (world->chunk_size_in_meters.y * mtop) * 0.5 ;
+        WorldChunk* chunk = get_world_chunk(world, game_state->curr_chunk);
+        F32 mtop = world->meters_to_pixels;
 
-
-          Banner top = chunk->top_banner;
-
-          LoadedBitmap* banner_tile = get_asset(&game_state->asset,asset_banner_tile);
-
-          S32 tex_width,tex_height ;
-          F32 min_x, min_y;
-
-          for (int i = 0; i < array_count(top.banners); ++i) {
-
-            min_x = center_x + ((-2.0f + i) * mtop) - (F32)mtop*.5f;
-            min_y = center_y + 4 * mtop - (F32)mtop*.5f;
-
-            opengl_bitmap(banner_tile, min_x, min_y,  mtop, mtop);
-            BannerTile tile = top.banners[i];
-            if(tile.status != banner_status_empty){
-              LowEntity low = game_state->low_entities[tile.low_index];
-              LoadedBitmap* bmp;
+        F32 center_x = (world->chunk_size_in_meters.x * mtop) * 0.5;
+        F32 center_y = (world->chunk_size_in_meters.y * mtop) * 0.5 ;
 
 
-              if(tile.status == banner_status_letter){
-                bmp = get_font(&game_state->font_asset, low.sim.value_s64);
-              }else{
-                bmp = get_font_number(&game_state->font_asset, low.sim.value_s64);
-              }
+        Banner top = chunk->top_banner;
 
-              tex_width  = bmp->width * mtop;
-              tex_height = bmp->height * mtop;
-              min_x += (F32)mtop*.5f - ((F32)tex_width*0.5f) ;
-            //min_x = (center_x + (-2.0f * mtop)) - ((F32)tex_width*0.5f) ;
-              min_y = (center_y + 4 * mtop) - ((F32)tex_height*0.5f);
-              opengl_bitmap(bmp, min_x, min_y,  tex_width, tex_height);
+        LoadedBitmap* banner_tile = get_asset(&platform.asset,asset_banner_tile);
+
+        S32 tex_width,tex_height ;
+        F32 min_x, min_y;
+
+        for (int i = 0; i < array_count(top.banners); ++i) {
+
+          min_x = center_x + ((-2.0f + i) * mtop) - (F32)mtop*.5f;
+          min_y = center_y + 4 * mtop - (F32)mtop*.5f;
+
+          opengl_bitmap(banner_tile, min_x, min_y,  mtop, mtop);
+          BannerTile tile = top.banners[i];
+          if(tile.status != banner_status_empty){
+            LowEntity low = game_state->low_entities[tile.low_index];
+            LoadedBitmap* bmp;
+
+
+            if(tile.status == banner_status_letter){
+              bmp = get_font(&platform.font_asset, low.sim.value_s64);
+            }else{
+              bmp = get_font_number(&platform.font_asset, low.sim.value_s64);
             }
-          }
 
-          Banner bottom = chunk->bottom_banner;
-          for (int i = 0; i < array_count(bottom.banners); ++i) {
-
-            min_x = center_x + ((-2.0f + i) * mtop) - (F32)mtop*.5f;
-            min_y = center_y - 4 * mtop - (F32)mtop*.5f;
-
-            opengl_bitmap(banner_tile, min_x, min_y,  mtop, mtop);
-            BannerTile tile = bottom.banners[i];
-            if(tile.status != banner_status_empty){
-              LowEntity low = game_state->low_entities[tile.low_index];
-              LoadedBitmap* bmp;
-
-              if(tile.status == banner_status_letter){
-                bmp = get_font(&game_state->font_asset, low.sim.value_s64);
-              }else{
-                bmp = get_font_number(&game_state->font_asset, low.sim.value_s64);
-              }
-
-              tex_width  = bmp->width * mtop;
-              tex_height = bmp->height * mtop;
-              min_x += (F32)mtop*.5f - ((F32)tex_width*0.5f) ;
+            tex_width  = bmp->width * mtop;
+            tex_height = bmp->height * mtop;
+            min_x += (F32)mtop*.5f - ((F32)tex_width*0.5f) ;
             //min_x = (center_x + (-2.0f * mtop)) - ((F32)tex_width*0.5f) ;
-              min_y = (center_y + 4 * mtop) - ((F32)tex_height*0.5f);
-              opengl_bitmap(bmp, min_x, min_y,  tex_width, tex_height);
-            }
+            min_y = (center_y + 4 * mtop) - ((F32)tex_height*0.5f);
+            opengl_bitmap(bmp, min_x, min_y,  tex_width, tex_height);
           }
         }
 
-        chunk = chunk->next;
+        Banner bottom = chunk->bottom_banner;
+        for (int i = 0; i < array_count(bottom.banners); ++i) {
+
+          min_x = center_x + ((-2.0f + i) * mtop) - (F32)mtop*.5f;
+          min_y = center_y - 4 * mtop - (F32)mtop*.5f;
+
+          opengl_bitmap(banner_tile, min_x, min_y,  mtop, mtop);
+          BannerTile tile = bottom.banners[i];
+          if(tile.status != banner_status_empty){
+            LowEntity low = game_state->low_entities[tile.low_index];
+            LoadedBitmap* bmp;
+
+            if(tile.status == banner_status_letter){
+              bmp = get_font(&platform.font_asset, low.sim.value_s64);
+            }else{
+              bmp = get_font_number(&platform.font_asset, low.sim.value_s64);
+            }
+
+            tex_width  = bmp->width * mtop;
+            tex_height = bmp->height * mtop;
+            min_x += (F32)mtop*.5f - ((F32)tex_width*0.5f) ;
+            //min_x = (center_x + (-2.0f * mtop)) - ((F32)tex_width*0.5f) ;
+            min_y = (center_y + 4 * mtop) - ((F32)tex_height*0.5f);
+            opengl_bitmap(bmp, min_x, min_y,  tex_width, tex_height);
+          }
+        }
       }
     }
   }
 }
 
-#define ended_down(b, C)((C->b.ended_down)? 1 :0)
-#define was_down(b, C)((!C->b.ended_down && C->b.half_transition_count)?1:0)
 
 function LoadedBitmap make_empty_bitmap(MemoryArena *arena, S32 width, S32 height, B32 clear_to_zero = true)
 {
@@ -659,8 +661,21 @@ function void level_one_init(GameState* game_state){
   //add_entity_letter(game_state, V2_S32{0,0}, V2_F32{-3,-1}, '+');
   add_entity_letter(game_state, V2_S32{0,0}, V2_F32{-3,-1}, '=');
 
-  LoadedBitmap* torch = get_asset(&game_state->asset, asset_fire_torch);
-  add_entity(game_state, V2_S32{0,0}, V2_F32{-7,3}, entity_type_fire_torch, torch, V4{1,1,1,1}, V2_F32{1, 1}, false);
+  LoadedBitmap* torch = get_asset(&platform.asset, asset_fire_torch);
+  add_entity(game_state, V2_S32{0,0}, V2_F32{-6,3}, entity_type_fire_torch, torch, V4{1,1,1,1}, V2_F32{1, 1}, false);
+}
+
+function void level_two_init(GameState* game_state){
+  S32 mtop = game_state->world->meters_to_pixels;
+  add_entity_number(game_state, V2_S32{1,0}, V2_F32{0,0}, 4);
+  add_entity_number(game_state, V2_S32{1,0}, V2_F32{1,0}, 8);
+  add_entity_number(game_state, V2_S32{1,0}, V2_F32{-5,2}, 2);
+  add_entity_letter(game_state, V2_S32{1,0}, V2_F32{4,1}, '%');
+  //add_entity_letter(game_state, V2_S32{0,0}, V2_F32{-3,-1}, '+');
+  add_entity_letter(game_state, V2_S32{1,0}, V2_F32{-3,-1}, '=');
+
+  LoadedBitmap* torch = get_asset(&platform.asset, asset_fire_torch);
+  add_entity(game_state, V2_S32{1,0}, V2_F32{-6,3}, entity_type_fire_torch, torch, V4{1,1,1,1}, V2_F32{1, 1}, false);
 }
 
 
@@ -672,11 +687,11 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
   if (is_file_changed(new_config_time, game_state->tokens.last_write_time)) {
 
-    initilize_arena(&game_state->world_arena, platform_state->permanent_storage_size, (U8*)platform_state->permanent_storage + sizeof(GameState));
+    //TODO: add to platform
 
-    game_state->world = push_struct(&game_state->world_arena, World);
+    game_state->world = push_struct(&platform.arena, World);
 
-    LoadedBitmap* tex_wall = get_asset(&game_state->asset, asset_wall);
+    LoadedBitmap* tex_wall = get_asset(&platform.asset, asset_wall);
 
     assert(tex_wall->height == tex_wall->width);
 
@@ -685,28 +700,21 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
     game_state->camera_p = create_world_pos(V2_S32{0, 0}, 0, 0);
 
-    game_state->font_asset = load_font_asset(&game_state->world_arena);
-    //add_string_to_bitmap(game_state, "APPLE BANANA12345678910!");
+    //TODO: add to platform
 
     //TODO: put low_entitites in the world instead of game_state
     for (U32 i = 0; i < array_count(game_state->low_entities); i++) {
       game_state->low_entities[i] = {};
     }
 
-    for(U32 i = 0; i < array_count(game_state->controlled_entity_index); i++){
-      game_state->controlled_entity_index[i] = 0;
-    }
-    game_state->player_index     = 0;
     game_state->low_entity_count = 0;
 
     add_low_entity(game_state, entity_type_null, {});
 
-
-
     //It is all about how big it is
     V2_F32 dim_in_meters = {};
-    dim_in_meters.x = (F32)buffer->width*(1.0f / (F32)world->meters_to_pixels);
-    dim_in_meters.y = (F32)buffer->height*(1.0f / (F32)world->meters_to_pixels);
+    dim_in_meters.x = world->chunk_size_in_meters.x;
+    dim_in_meters.y = world->chunk_size_in_meters.y;
     game_state->camera_bounds = rect_center_half_dim(V2_F32{ 0,0 }, dim_in_meters);
 
     Config * tokens = &game_state->tokens;
@@ -718,42 +726,43 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
       ConfigToken curr = tokens->tokens[i];
       switch (curr.type) {
 
-      case(command_add_wall): {
-        V2_S32 chunk_pos  = {};
-        S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
-        if (assigned == 2) {
+        case(command_add_wall): {
+          V2_S32 chunk_pos  = {};
+          S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
+          if (assigned == 2) {
           //add_wall(game_state, chunk_pos, V2_F32{ rel_x, rel_y });
-        } else {
-          assert(0);
-        }
-      }break;
+          } else {
+            assert(0);
+          }
+        }break;
 
-      case(command_add_walls_around_chunk_pos): {
-        V2_S32 chunk_pos = {};
-        S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
-        if (assigned == 2) {
-          add_walls_around_chunk_pos(game_state, chunk_pos);
-        } else {
-          assert(0);
-        }
-      }break;
+        case(command_add_walls_around_chunk_pos): {
+          V2_S32 chunk_pos = {};
+          S32 assigned = sscanf_s(curr.args, "{%d,%d}", &chunk_pos.x, &chunk_pos.y);
+          if (assigned == 2) {
+            add_walls_around_chunk_pos(game_state, chunk_pos);
+          } else {
+            assert(0);
+          }
+        }break;
 
-      case(command_add_temple):{
-        V2_S32 chunk_pos = {};
-        F32 rel_x = 0.0f;
-        F32 rel_y = 0.0f;
-        S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_pos.x, &chunk_pos.y, &rel_x, &rel_y);
-        LoadedBitmap* temple =  get_asset(&game_state->asset, asset_temple);
-        if (assigned == 4) {
-          add_temple(game_state, chunk_pos, V2_F32{ rel_x, rel_y },temple);
-        } else {
-          assert(0);
+        case(command_add_temple):{
+          V2_S32 chunk_pos = {};
+          F32 rel_x = 0.0f;
+          F32 rel_y = 0.0f;
+          S32 assigned = sscanf_s(curr.args, "{%d,%d,%f,%f}", &chunk_pos.x, &chunk_pos.y, &rel_x, &rel_y);
+          LoadedBitmap* temple =  get_asset(&platform.asset, asset_temple);
+          if (assigned == 4) {
+            add_temple(game_state, chunk_pos, V2_F32{ rel_x, rel_y },temple);
+          } else {
+            assert(0);
+          }
         }
-      }
       }
     }
 
     level_one_init(game_state);
+    level_two_init(game_state);
 
     F32 a = 2.0f/(F32)buffer->width;
     F32 b = 2.0f/(F32)buffer->height;
@@ -763,7 +772,6 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
       0, 0, 1, 0,
       -1,-1, 0, 1,
     };
-    F32 mtop = world->meters_to_pixels;
     glUseProgram(opengl_config.basic_light_program);
     glUniformMatrix4fv(opengl_config.transform_id, 1, GL_FALSE, &proj[0]);
     glUseProgram(0);
@@ -775,8 +783,9 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
 
   B32 undo = false;
 
+
+  WorldChunk* chunk = get_world_chunk(game_state->world, game_state->curr_chunk);
   for (S32 i = 0; i < array_count(input->controllers); i += 1) {
-    S32 controlled_entity_index = game_state->controlled_entity_index[i];
     ControllerInput* controller = input->controllers + i;
     if (was_down(Key_l, controller)) toggle_light(); 
     if (was_down(Key_t, controller)) {
@@ -789,18 +798,19 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
     if (was_down(action_down, controller))  camera_ddp.y = -1;
     if (was_down(action_up, controller))    camera_ddp.y = 1; 
 
-    if (controlled_entity_index == 0) {
+    if (was_down(escape, controller))    platform.game_mode = game_mode_menu; 
+
+    if (chunk->player_index == 0) {
       //Adding new player
       if (controller->start.ended_down) {
         WorldPosition new_player_pos = {};
-        new_player_pos.offset = V2_F32{ 7.0f, 0.0f };
-        LoadedBitmap* player_left = get_asset(&game_state->asset, asset_player_left);
-        AddLowEntityResult res = add_entity(game_state, new_player_pos.chunk_pos, new_player_pos.offset, entity_type_player, player_left , V4{1,1,1,1}, V2_F32{1.0f,1.0f});
-        game_state->controlled_entity_index[i] = res.index;
-        game_state->player_index = res.index;
+        new_player_pos.offset = V2_F32{ 6.0f, 0.0f };
+        LoadedBitmap* player_left = get_asset(&platform.asset, asset_player_left);
+        AddLowEntityResult res = add_entity(game_state, game_state->curr_chunk, new_player_pos.offset, entity_type_player, player_left , V4{1,1,1,1}, V2_F32{1.0f,1.0f});
+        chunk->player_index = res.index;
       }
     } else {
-      LowEntity* low_entity = game_state->low_entities + controlled_entity_index;
+      LowEntity* low_entity = game_state->low_entities + chunk->player_index;
       SimEntity* entity = &low_entity->sim;
       if (controller->is_analog) {
         //player_ddp = V2_S32{ controller->stick_x, controller->stick_y };
@@ -832,28 +842,28 @@ function void render_game(OffscreenBuffer* buffer, PlatformState* platform_state
   SimEntity* entity = sim_region->entities;
   for (S32 i = 0; i < sim_region->entity_count; i += 1, entity++) {
     switch (entity->type) {
-    case entity_type_player: {
-      if (entity->type == entity_type_player) {
+      case entity_type_player: {
+        if (entity->type == entity_type_player) {
 
-        LowEntity* low = &game_state->low_entities[entity->storage_index]; 
-        if(undo){
-          undo_player(game_state, low, &player_ddp);
-        }
-        update_animation_player(game_state, player_ddp,entity, low, undo);
+          LowEntity* low = &game_state->low_entities[entity->storage_index]; 
+          if(undo){
+            undo_player(game_state, low, &player_ddp);
+          }
+          update_animation_player(game_state, player_ddp,entity, low, undo);
           
-        MoveSpec spec = default_move_spec();
-        spec.unit_max_accel_vector = 1;
-        spec.speed = 18.61f;
-        spec.drag = 8.0f;
+          MoveSpec spec = default_move_spec();
+          spec.unit_max_accel_vector = 1;
+          spec.speed = 18.61f;
+          spec.drag = 8.0f;
         //move_entity(sim_region, entity, input->dtForFrame, &spec, player_ddp);
+        }
       }
-    }
     }
   }
 
   end_sim(sim_region, game_state);
 
-  LoadedBitmap* background_png = get_asset(&game_state->asset, asset_background);
+  LoadedBitmap* background_png = get_asset(&platform.asset, asset_background);
   opengl_bitmap(background_png, 0,0, background_png->width, background_png->height);
 
   render_entities(&game_state->camera_bounds, &game_state->camera_p, buffer, game_state);

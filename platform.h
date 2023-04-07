@@ -52,8 +52,10 @@ struct ControllerInput{
       ButtonState Key_u;
       ButtonState Key_l; //TODO: put this only on debug build?
       ButtonState Key_t; //TODO: put this only on debug build?
+      ButtonState enter;
+      ButtonState escape;
     };
-    ButtonState buttons[15];
+    ButtonState buttons[17];
   };
 };
 
@@ -63,6 +65,9 @@ struct  GameInput{
   S32 mouse_x, mouse_y, mouse_z;
   ControllerInput controllers[5];
 };
+
+#define ended_down(b, C)((C->b.ended_down)? 1 :0)
+#define was_down(b, C)((!C->b.ended_down && C->b.half_transition_count)?1:0)
 
 //Arena stuffs
 struct MemoryArena{
@@ -109,13 +114,13 @@ inline void* push_size_(MemoryArena* arena, S64 size_init, S64 alignment = 4){
   return ret;
 }
 
-struct PlatformState{
-  U64 total_size;
-  U64 permanent_storage_size;
-  U64 temporary_storage_size;
-  void* permanent_storage;
-  void* temporary_storage;
+enum GameMode{
+  game_mode_menu,
+  game_mode_view,
+  game_mode_play,
+  game_mode_exit
 };
+
 
 struct ReadFileResult{
   U32 content_size;
@@ -145,9 +150,38 @@ struct LoadedBitmap{
 
 #pragma pack(pop)
 
-struct BitmapArray{ //used for collective rendering of bitmap
-  U32 count;
-  LoadedBitmap bitmaps[100];
+enum Asset_Enum{
+  asset_background,
+  asset_temple,
+  asset_player_right,
+  asset_player_left,
+  asset_wall,
+  asset_grass,
+  asset_banner_tile,
+  asset_fire_torch,
+  asset_count
+};
+
+struct Asset{
+  LoadedBitmap bitmaps[asset_count];
+};
+
+
+struct FontAsset{
+  LoadedBitmap bitmaps[96];
+};
+
+struct PlatformState{
+  GameMode game_mode;
+
+  Asset asset;
+  U64 total_size;
+  U64 permanent_storage_size;
+  U64 temporary_storage_size;
+  MemoryArena arena;
+  FontAsset font_asset;
+  void* permanent_storage;
+  void* temporary_storage;
 };
 
 

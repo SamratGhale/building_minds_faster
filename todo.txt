@@ -18,12 +18,6 @@ each tiles has linked list of entites
 (World Building Platform)
 ->implement zoom in and zoom out (scrolling and grabbing by mouse)
 
-->fill the world (this should also fix the crashing while roaming in the uninitilized world)
-
-(Rendering fonts)
-->Menu
-->debug infos(might not be necessary)
-
 (sound)
 ->Implement Wav Sound parser and use in the game (casey's stream)
 ->Create Sounds For games (in fl studio)
