@@ -1,0 +1,612 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"wave_f",
+				"wave_format"
+			],
+			[
+				"fa",
+				"face_direction"
+			],
+			[
+				"move",
+				"move_down"
+			],
+			[
+				"dr",
+				"DrawRectWithOpenGL"
+			],
+			[
+				"per",
+				"permanent_storage"
+			],
+			[
+				"WOrld",
+				"WorldChunk"
+			],
+			[
+				"curr",
+				"curr_chunk"
+			],
+			[
+				"cu",
+				"curr_chunk"
+			],
+			[
+				"map",
+				"map_into_world_position"
+			],
+			[
+				"chunk",
+				"chunk_size_in_meters"
+			],
+			[
+				"pla",
+				"player_index"
+			],
+			[
+				"low",
+				"low_entities"
+			],
+			[
+				"LowEn",
+				"AddLowEntityResult"
+			],
+			[
+				"pi",
+				"pixel_size"
+			],
+			[
+				"conte",
+				"content_size"
+			],
+			[
+				"asse",
+				"asset_font"
+			],
+			[
+				"Font",
+				"AssetFont"
+			],
+			[
+				"uint",
+				"uint64_t"
+			],
+			[
+				"tile",
+				"tile_path"
+			],
+			[
+				"Ani",
+				"Animation"
+			]
+		]
+	},
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"settings",
+				"Preferences: Settings"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"formatter ",
+				"Formatter: Beautify With Uncrustify"
+			],
+			[
+				"clang",
+				"Clang Format: Format Selection"
+			],
+			[
+				"project",
+				"Project: Save As"
+			],
+			[
+				"color",
+				"UI: Select Color Scheme"
+			],
+			[
+				"theme",
+				"UI: Select Theme"
+			],
+			[
+				"settin",
+				"Preferences: Settings"
+			],
+			[
+				"a file icon",
+				"Preferences: A File Icon Settings"
+			],
+			[
+				"package settin",
+				"Preferences: Package Control Settings"
+			],
+			[
+				"setting",
+				"Preferences: Settings"
+			],
+			[
+				"ui",
+				"UI: Select Theme"
+			],
+			[
+				"repve",
+				"Package Control: Remove Package"
+			],
+			[
+				"vintage",
+				"Vintageous: Open .vintageousrc"
+			],
+			[
+				"settings ",
+				"Preferences: Settings"
+			],
+			[
+				"sett",
+				"Preferences: Settings"
+			],
+			[
+				"rename",
+				"Rename File"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"key",
+				"Preferences: Key Bindings"
+			],
+			[
+				"dis",
+				"View: Toggle Distraction Free"
+			],
+			[
+				"distra",
+				"View: Toggle Distraction Free"
+			],
+			[
+				"snippet: fpr",
+				"Snippet: fprintf …"
+			],
+			[
+				"search",
+				"Snippet: SaltUI SearchBar"
+			],
+			[
+				"keyb",
+				"Preferences: Key Bindings"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": false,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/C/Users/samrat/AppData/Roaming/Sublime Text/Packages/SublimeAStyleFormatter/SublimeAStyleFormatter.sublime-settings",
+		"/C/Users/samrat/AppData/Roaming/Sublime Text/Packages/User/SublimeAStyleFormatter.sublime-settings",
+		"/W/building_minds_faster/sublime.sublime-project",
+		"/W/building_minds_faster/assets.cpp",
+		"/W/building_minds_faster/menu.cpp",
+		"/W/building_minds_faster/misc/new_asset_builder.cpp",
+		"/W/building_minds_faster/game.cpp",
+		"/W/building_minds_faster/world.h",
+		"/W/building_minds_faster/platform.cpp",
+		"/W/building_minds_faster/sim_region.cpp",
+		"/W/building_minds_faster/platform.h",
+		"/W/building_minds_faster/world.cpp",
+		"/W/building_minds_faster/bmf_opengl.cpp",
+		"/W/building_minds_faster/frag.glsl",
+		"/W/building_minds_faster/game.h",
+		"/W/building_minds_faster/todo.txt",
+		"/W/building_minds_faster/sim_region.h",
+		"/W/building_minds_faster/misc/build_line_count.bat",
+		"/W/building_minds_faster/misc/line_count.cpp",
+		"/W/building_minds_faster/misc/build_asset.bat",
+		"/C/Users/samrat/AppData/Roaming/Sublime Text/Packages/Default/Preferences.sublime-settings",
+		"/W/building_minds_faster/level1.config",
+		"/C/Users/samrat/.emacs",
+		"/C/Users/samrat/AppData/Roaming/Sublime Text/Packages/User/.vintageousrc",
+		"/W/building_minds_faster/png_reader.cpp",
+		"/W/building_minds_faster/caves.txt",
+		"/W/building_minds_faster/vert.glsl",
+		"/W/building_minds_faster/opengl_notes.txt",
+		"/W/building_minds_faster/parser.h",
+		"/W/building_minds_faster/config.bmf",
+		"/W/building_minds_faster/build_asset.bat",
+		"/W/building_minds_faster/ultraedit.prj",
+		"/W/building_minds_faster/bmf_opengl.h",
+		"/W/building_minds_faster/new_asset_builder.cpp",
+		"/W/building_minds_faster/asset_builder.cpp",
+		"/W/building_minds_faster/stb_truetype.h",
+		"/C/Users/samrat/AppData/Roaming/Sublime Text/Packages/Default/Default (Windows).sublime-keymap",
+		"/W/handmade_hero_day_458_source/code/handmade_world_gen.cpp",
+		"/W/cpp/code/handmade_asset.h",
+		"/W/cpp/.vscode/settings.json",
+		"/W/cpp/code/handmade.cpp",
+		"/W/cpp/code/handmade_asset.cpp",
+		"/W/cpp/misc/msdev.bat",
+		"/W/cpp/readme.txt",
+		"/W/cpp/code/handmade_particles.h",
+		"/W/cpp/code/handmade_shared.h",
+		"/W/cpp/code/test_asset_builder.cpp",
+		"/W/cpp/misc/4coder_casey.cpp",
+		"/W/cpp/misc/4ed.bat",
+		"/W/cpp/misc/emacs.bat",
+		"/W/cpp/misc/emacs_keybindings.txt",
+		"/W/cpp/misc/handmade_hero_settings_msvc2013.vssettings",
+		"/W/cpp/misc/nhm.bat",
+		"/W/cpp/misc/shell.bat",
+		"/W/cpp/handmade.prj",
+		"/W/cpp/day.txt",
+		"/W/building_minds_faster/math.h"
+	],
+	"find":
+	{
+		"height": 33.6
+	},
+	"find_in_files":
+	{
+		"height": 140.0,
+		"where_history":
+		[
+			"platform.cpp",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"glVertex2f",
+			"platform_state",
+			"entity"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"platform"
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": false,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"incremental_find":
+	{
+		"height": 33.6
+	},
+	"input":
+	{
+		"height": 52.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.5,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": false,
+	"output.find_results":
+	{
+		"height": 152.0
+	},
+	"pinned_build_system": "",
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"plat",
+				"platform.cpp"
+			],
+			[
+				"build.bat",
+				"build.bat"
+			],
+			[
+				"platform.c",
+				"platform.cpp"
+			],
+			[
+				"platform_c",
+				"platform_common.h"
+			],
+			[
+				"build.ba",
+				"build.bat"
+			],
+			[
+				"build",
+				"misc\\build_line_count.bat"
+			],
+			[
+				"new",
+				"misc\\new_asset_builder.cpp"
+			],
+			[
+				"game",
+				"game.cpp"
+			],
+			[
+				"wor",
+				"world.h"
+			],
+			[
+				"asse",
+				"assets.cpp"
+			],
+			[
+				"me",
+				"menu.cpp"
+			],
+			[
+				"ass",
+				"assets.cpp"
+			],
+			[
+				"",
+				"platform.h"
+			],
+			[
+				"pla",
+				"platform.cpp"
+			],
+			[
+				"platform.h",
+				"platform.h"
+			],
+			[
+				"men",
+				"menu.cpp"
+			],
+			[
+				"platfor",
+				"platform.h"
+			],
+			[
+				"menu",
+				"menu.cpp"
+			],
+			[
+				"world",
+				"world.cpp"
+			],
+			[
+				"openg",
+				"bmf_opengl.cpp"
+			],
+			[
+				"gam",
+				"game.cpp"
+			],
+			[
+				"glsl",
+				"frag.glsl"
+			],
+			[
+				"game.c",
+				"game.cpp"
+			],
+			[
+				"platform",
+				"platform.cpp"
+			],
+			[
+				"game.h",
+				"game.h"
+			],
+			[
+				"world.c",
+				"world.cpp"
+			],
+			[
+				"platform.",
+				"platform.cpp"
+			],
+			[
+				"sim",
+				"sim_region.cpp"
+			],
+			[
+				"game.",
+				"game.cpp"
+			],
+			[
+				"wo",
+				"world.h"
+			],
+			[
+				"todo",
+				"todo.txt"
+			],
+			[
+				"open",
+				"bmf_opengl.cpp"
+			],
+			[
+				"world.h",
+				"world.h"
+			],
+			[
+				"line",
+				"misc\\line_count.cpp"
+			],
+			[
+				"bui",
+				"misc\\build_line_count.bat"
+			],
+			[
+				"build_lie",
+				"misc\\build_line_count.bat"
+			],
+			[
+				"worl",
+				"world.h"
+			],
+			[
+				"word",
+				"world.cpp"
+			],
+			[
+				"opengl",
+				"bmf_opengl.cpp"
+			],
+			[
+				"palt",
+				"platform.cpp"
+			],
+			[
+				"tod",
+				"todo.txt"
+			],
+			[
+				"bmf",
+				"bmf_opengl.cpp"
+			],
+			[
+				"new_a",
+				"new_asset_builder.cpp"
+			],
+			[
+				"assets",
+				"assets.cpp"
+			],
+			[
+				"assets.c",
+				"assets.cpp"
+			],
+			[
+				"stb",
+				"stb_truetype.h"
+			],
+			[
+				"asset",
+				"asset_builder.cpp"
+			],
+			[
+				"ga",
+				"game.cpp"
+			],
+			[
+				"pl",
+				"platform.h"
+			],
+			[
+				"opengl.h",
+				"bmf_opengl.h"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+		"_vintageous_last_buffer_search": "wave_for",
+		"_vintageous_last_buffer_search_command": "vi_slash",
+		"_vintageous_last_char_search_command": "vi_t",
+		"_vintageous_last_character_search": "7",
+		"_vintageous_reset_during_init": true,
+		"vintage":
+		{
+			"_cmdline_cd": "W:\\building_minds_faster"
+		}
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 186.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

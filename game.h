@@ -1,6 +1,7 @@
 #ifndef GAME_H
 
 #include "world.h"
+#include "assets.h"
 #include "sim_region.h"
 #include "parser.cpp"
 
@@ -29,6 +30,13 @@ inline void clear_flag(SimEntity* entity, U32 flag){
   entity->flags &= ~flag;
 }
 
+struct PlayingSound{
+  F32 volume[2];
+  AssetSound_Enum id; 
+  S32 samples_played;
+  PlayingSound* next;
+};
+
 struct GameState{
 
   World* world;
@@ -37,7 +45,6 @@ struct GameState{
   U32 low_entity_count;
   LowEntity low_entities[1000];
   B32 is_initilized;
-  S32 debug_index;
   Animation chunk_animation; //@debug
 
   Config tokens;
@@ -45,6 +52,11 @@ struct GameState{
   V2_S32 curr_chunk; //basically the current level
   
   bool show_tiles;
+
+  B32 initilized;
+
+  PlayingSound* first_playing_sound;
+  PlayingSound* first_free_playing_sound;
 };
 
 

@@ -54,6 +54,7 @@ struct SimEntity{
 
   LoadedBitmap* texture;
   Animation* animation; //Curently used for player
+  B32 jump;
 
 };
 

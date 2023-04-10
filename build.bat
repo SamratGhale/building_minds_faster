@@ -1,5 +1,5 @@
 @echo off
-set CommonCompilerFlags=-MTd -DDEBUG=1 -nologo -fp:fast -Gm- -GR- -Od -Oi -FC -Z7
+set CommonCompilerFlags=-MTd -DDEBUG=1 -nologo -fp:fast -Gm- -GR- -O2 -Oi -FC -Z7 
 set CommonLinkerFlags= -incremental:no -opt:ref
 IF NOT EXIST .\build mkdir .\build
 pushd .\build

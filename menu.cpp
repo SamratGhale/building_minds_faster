@@ -1,13 +1,4 @@
-struct MenuItem{
-	char title[20]; 
-};
-
-struct MenuState{
-	MenuItem items[4];
-	B32 initilized;
-	OpenglContext gl_context;
-	U8 selected;
-};
+#include "menu.h"
 
 function void openg_draw_rect(F32 min_x, F32 min_y, F32 max_x, F32 max_y, MenuState* state) {
 
@@ -72,17 +63,20 @@ function void render_menu(OffscreenBuffer* buffer, GameInput* input) {
 
 	MenuState* state = (MenuState*)((U8*)platform.permanent_storage + sizeof(GameState));
 
-  LoadedBitmap* background_png = get_asset(&platform.asset, asset_background);
-  opengl_bitmap(background_png, 0,0, background_png->width, background_png->height);
+	LoadedBitmap* background_png = get_asset(&platform.asset, asset_background);
+
+	opengl_bitmap(background_png, 0,0, background_png->width, background_png->height);
 
 	if(!state->initilized){
+
+		GameState* game_state = (GameState*)platform.permanent_storage;
 
 		strncpy(state->items[0].title, "SETTINGS\n", 20);
 		strncpy(state->items[1].title, "PLAY\n", 20);
 		strncpy(state->items[2].title, "QUIT\n", 20);
 		strncpy(state->items[3].title, "RESUME\n", 20);
 
-		state->selected = 2;
+		state->selected = 1;
 
 		//state->initilized = true;
 		F32 a = 2.0f/(F32)buffer->width;
@@ -105,27 +99,28 @@ function void render_menu(OffscreenBuffer* buffer, GameInput* input) {
 
 		if (was_down(move_down, controller)){
 			if(state->selected < 3) state->selected++;
+			state->click = true;
 		}
 		if (was_down(move_up, controller)){
 			if(state->selected > 0) state->selected--;
+			state->click = true;
 		}
 		if (was_down(enter, controller)){
 			switch(state->selected){
-				case 0:{
-
-				}break;
-				case 1:{
-					platform.game_mode = game_mode_play;
-				}break;
-				case 2:{
-					platform.game_mode = game_mode_exit;
-				}break;
-				case 3:{
-					platform.game_mode = game_mode_play;
-				}break;
-			}
-		}
-	}
+			case 0:{
+			}break;
+		case 1:{
+			platform.game_mode = game_mode_play;
+		}break;
+	case 2:{
+		platform.game_mode = game_mode_exit;
+	}break;
+case 3:{
+	platform.game_mode = game_mode_play;
+}break;
+}
+}
+}
 }
 
 

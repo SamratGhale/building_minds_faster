@@ -1,14 +1,14 @@
 #ifndef BMF_OPENGL
 
-//To be attached to the entity structs
-struct OpenglContext{
-  U32 tex_handle; //This will be uninitilized for tile
+// To be attached to the entity structs
+struct OpenglContext {
+  U32 tex_handle;  // This will be uninitilized for tile
   U32 vbo;
   U32 vao;
   U32 ebo;
 };
 
-struct OpenglInfo{
+struct OpenglInfo {
   B32 modern_context;
 
   char* vendor;
@@ -22,7 +22,7 @@ struct OpenglInfo{
   B32 GL_ARB_framebuffer_object;
 };
 
-struct OpenglConfig{
+struct OpenglConfig {
   GLuint basic_light_program;
   GLuint default_internal_text_format;
   GLuint texture_sampler_id;
@@ -33,8 +33,6 @@ struct OpenglConfig{
 
   GLuint tile_uniform;
 };
-
-
 
 #define BMF_OPENGL
 #endif
