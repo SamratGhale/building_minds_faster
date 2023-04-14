@@ -1,0 +1,95 @@
+
+/* this is the code to move smoothly rather than tile to tile */
+
+function B32 test_wall(F32 wall_x, F32 rel_x, F32 rel_y, F32 p_delta_x,
+                       F32 p_delta_y, F32* t_min, F32 min_y, F32 max_y) {
+  B32 hit = false;
+  F32 t_epsilon = 0.001f;
+  if (p_delta_x != 0.0f) {
+    F32 t_result = (wall_x - rel_x) / p_delta_x;
+    F32 y = rel_y + t_result * p_delta_y;
+    if ((t_result >= 0.0f) && (*t_min > t_result)) {
+      if ((y >= min_y) && (y <= max_y)) {
+        *t_min = MAX(0.0f, t_result - t_epsilon);
+        hit = true;
+      }
+    }
+  }
+  return hit;
+}
+
+function void move_entity(SimRegion* sim_region, SimEntity* entity, F32 dt,
+                          MoveSpec* move_spec, V2_F32 ddP) {
+  World* world = sim_region->world;
+
+  if (move_spec->unit_max_accel_vector) {
+    F32 ddP_len = length_sq(ddP);
+    if (ddP_len > 1.0f) {
+      ddP = ddP * (1.0f / sq_root(ddP_len));
+    }
+  }
+  ddP *= move_spec->speed;
+  ddP += -move_spec->drag * entity->dP;
+  V2_F32 delta = (0.5f * ddP * square(dt) + entity->dP * dt);
+  entity->dP = ddP * dt + entity->dP;
+
+  for (S32 j = 0; j < 4; j += 1) {
+    F32 t_min = 1.0f;
+    V2_F32 wall_normal = {};
+    U32 hit_entity_index = -1;
+    V2_F32 desired_pos = entity->pos + delta;
+
+    for (S32 i = 0; i < sim_region->entity_count; i += 1) {
+      if (i != entity->storage_index) {
+        SimEntity* test_entity = sim_region->entities + i;
+        if (test_entity->collides) {
+          F32 diameter_w = test_entity->width + entity->width;
+          F32 diameter_h = test_entity->height + entity->height;
+          V2_F32 min_corner = -0.5f * V2_F32{diameter_w, diameter_h};
+          V2_F32 max_corner = 0.5f * V2_F32{diameter_w, diameter_h};
+
+          V2_F32 rel = entity->pos - test_entity->pos;
+
+          if (test_wall(min_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min,
+                        min_corner.y, max_corner.y)) {
+            wall_normal = V2_F32{-1, 0};
+            hit_entity_index = i;
+          }
+          if (test_wall(max_corner.x, rel.x, rel.y, delta.x, delta.y, &t_min,
+                        min_corner.y, max_corner.y)) {
+            wall_normal = V2_F32{1, 0};
+            hit_entity_index = i;
+          }
+          if (test_wall(max_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min,
+                        min_corner.x, max_corner.x)) {
+            wall_normal = V2_F32{0, 1};
+            hit_entity_index = i;
+          }
+          if (test_wall(min_corner.y, rel.y, rel.x, delta.y, delta.x, &t_min,
+                        min_corner.x, max_corner.x)) {
+            wall_normal = V2_F32{0, -1};
+            hit_entity_index = i;
+          }
+        }
+      }
+    }
+
+    entity->pos += t_min * delta;
+    if (hit_entity_index != -1) {
+      entity->dP =
+          entity->dP - 1 * inner(entity->dP, wall_normal) * wall_normal;
+      delta = desired_pos - entity->pos;
+      delta = delta - 1 * inner(delta, wall_normal) * wall_normal;
+    } else {
+      break;
+    }
+  }
+  if ((entity->dP.x == 0.0f) && (entity->dP.x == 0.0f)) {
+  } else if (ABS(entity->dP.x) > ABS(entity->dP.y)) {
+    if (entity->dP.x > 0) {
+      entity->face_direction = 0;  // right
+    } else {
+      entity->face_direction = 2;  // left
+    }
+  }
+}
